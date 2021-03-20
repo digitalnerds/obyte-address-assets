@@ -147,13 +147,17 @@ function initToastr() {
   $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
   $(window).bind( 'hashchange', function(e) {
     $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
-    $('#obyte-address-form').submit();
-  })
+    getAssets();
+  });
 
-  $('#obyte-address-form').on('submit', async (e) => {
+  $('#obyte-address-form').on('submit', (e) => {
     e.preventDefault();
-    const obyteAddressInput = $('#input-obyte-address');
-    const address = obyteAddressInput.val();
+    window.history.replaceState(null, null, document.location.pathname + '#' + $('#input-obyte-address').val());
+    getAssets();
+  });
+  
+  async function getAssets() {
+    const address = $('#input-obyte-address').val();
 
     if (address.length === 0) {
       return;
@@ -181,6 +185,7 @@ function initToastr() {
     const chartAssetValueInGB = [];
     const chartAssetName = [];
 
+    $('#card-container').html('');
     addressAsset.forEach(asset => {
 
       chartAssetValueInGB.push(asset.currentValueInGB.toFixed(4));
@@ -248,6 +253,6 @@ function initToastr() {
     $('#total-usd').text('$' + totalUSD.toFixed(2));
     $('#total-container').removeClass('d-none');
     $('#chart-container').removeClass('d-none');
-  });
+  }
 
 })();
