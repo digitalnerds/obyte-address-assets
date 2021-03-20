@@ -137,12 +137,18 @@ function initToastr() {
   fetch('https://referrals.ostable.org/distributions/next')
     .then(response => response.json())
     .then(response_json => response_json.data.balances.map(item => {
-      return `<a href="#" class="address" onClick="$('#input-obyte-address').val($(this).text());$('#obyte-address-form').submit();return false;">${item.address}</a><br>`;
+      return `<a href="#${item.address}" class="address">${item.address}</a><br>`;
     }))
     .then(hodlers => {
       $('#hodlers-list').html(hodlers.slice(0, 10).join("\n"));
       $('#top-hodlers').removeClass('d-none');
     });
+
+  $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
+  $(window).bind( 'hashchange', function(e) {
+    $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
+    $('#obyte-address-form').submit();
+  })
 
   $('#obyte-address-form').on('submit', async (e) => {
     e.preventDefault();
