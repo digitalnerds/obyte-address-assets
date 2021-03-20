@@ -195,11 +195,30 @@ function initToastr() {
       chartAssetValueInGB.push(asset.currentValueInGB.toFixed(3));
       chartAssetName.push(asset.unit);
 
+      let assetStyle = '';
+      if (asset.unit.startsWith("OPT-")) {
+        assetStyle = 'background: #008080;';
+      }
+      else if (asset.unit.endsWith("ARB")) {
+        assetStyle = 'background: #800080;';
+      }
+      else if (asset.unit.startsWith("GR")) {
+        assetStyle = 'background: red;';
+      }
+      else if (asset.unit.startsWith("O")) {
+        assetStyle = 'background: green;';
+      }
+      else if (asset.unit.startsWith("I")) {
+        assetStyle = 'background: blue;';
+      }
+
       const tmp = template
         .replace('{{asset}}', asset.unit)
+        .replace('{{assetStyle}}', assetStyle)
         .replace('{{amount}}', asset.balance.toFixed(asset.decimal || 9))
         .replace('{{amountInGB}}', asset.currentValueInGB.toFixed(3))
-        .replace('{{amountInUSD}}', asset.currentValueInUSD.toFixed(2))
+        .replace('{{amountInUSD}}', asset.currentValueInUSD.toFixed(2));
+
       $('#card-container').append(tmp);
     });
 
