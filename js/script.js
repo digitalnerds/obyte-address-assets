@@ -170,6 +170,14 @@ async function getAddressAssets(address, marketData) {
 }
 
 const obyteAddressInput = $('#input-obyte-address');
+const btnSubmit = $('#btn-submit');
+const btnClear = $('#btn-clear');
+const topHodlers = $('#top-hodlers');
+const cardContainer = $('#card-container');
+const totalContainer = $('#total-container');
+const chartContainer = $('#chart-container');
+
+
 
 function initToastr() {
   toastr.options = {
@@ -192,37 +200,6 @@ function initToastr() {
 }
 
 (async () => {
-  initToastr();
-
-  const marketData = await getObyteMarketData();
-  const template = $('#card-template')[0].innerHTML;
-
-  fetch('https://referrals.ostable.org/distributions/next')
-    .then(response => response.json())
-    .then(response_json => response_json.data.balances.map(item => {
-      return `<a href="#${item.address}" class="address">${item.address}</a><br>`;
-    }))
-    .then(hodlers => {
-      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
-      $('#top-hodlers').removeClass('d-none');
-    });
-
-  obyteAddressInput.val(window.location.hash.replace(/^#/,''));
-  if (obyteAddressInput.val()) {
-    getAssets();
-  }
-
-  $(window).bind( 'hashchange', function(e) {
-    obyteAddressInput.val(window.location.hash.replace(/^#/,''));
-    getAssets();
-  });
-
-  $('#obyte-address-form').on('submit', (e) => {
-    e.preventDefault();
-    window.history.replaceState(null, null, document.location.pathname + '#' + $('#input-obyte-address').val());
-    getAssets();
-  });
-
   async function getAssets() {
     const address = obyteAddressInput.val();
 
@@ -251,7 +228,7 @@ function initToastr() {
     const chartAssetValueInGB = [];
     const chartAssetName = [];
 
-    $('#card-container').html('');
+    cardContainer.html('');
     addressAsset.forEach(asset => {
 
       chartAssetValueInGB.push(asset.currentValueInGB.toFixed(3));
@@ -332,15 +309,59 @@ function initToastr() {
       }
     });
 
-    $('#top-hodlers').addClass('d-none');
     $('#open-explorer').attr('href', `https://explorer.obyte.org/#${address}`);
     $('#open-explorer2').attr('href', `https://obyte.io/@${address}`);
     $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
     $('#market-price-reverse').text(`$1 = ${(1/marketData.averageUSDPrice).toFixed(9)} GBYTE`);
     $('#total-gb').text(`${totalGB.toFixed(3)} GBYTE`);
     $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
-    $('#total-container').removeClass('d-none');
-    $('#chart-container').removeClass('d-none');
+    topHodlers.addClass('d-none');
+    totalContainer.removeClass('d-none');
+    chartContainer.removeClass('d-none');
+    btnSubmit.addClass('d-none');
+    btnClear.removeClass('d-none');
   }
+
+  initToastr();
+
+  const marketData = await getObyteMarketData();
+  const template = $('#card-template')[0].innerHTML;
+
+  fetch('https://referrals.ostable.org/distributions/next')
+    .then(response => response.json())
+    .then(response_json => response_json.data.balances.map(item => {
+      return `<a href="#${item.address}" class="address">${item.address}</a><br>`;
+    }))
+    .then(hodlers => {
+      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
+      $('#top-hodlers').removeClass('d-none');
+    });
+
+  obyteAddressInput.val(window.location.hash.replace(/^#/,''));
+  if (obyteAddressInput.val()) {
+    getAssets();
+  }
+
+  $(window).bind( 'hashchange', function(e) {
+    obyteAddressInput.val(window.location.hash.replace(/^#/,''));
+    getAssets();
+  });
+
+  $('#obyte-address-form').on('submit', (e) => {
+    e.preventDefault();
+    window.history.replaceState(null, null, document.location.pathname + '#' + $('#input-obyte-address').val());
+    getAssets();
+  });
+
+  btnClear.on('click', () => {
+    obyteAddressInput.text('');
+    cardContainer.html('');
+    totalContainer.addClass('d-none');
+    chartContainer.addClass('d-none');
+    topHodlers.removeClass('d-none');
+    btnSubmit.removeClass('d-none');
+    btnClear.addClass('d-none');
+  });
+
 
 })();
