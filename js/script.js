@@ -161,7 +161,9 @@ async function getAddressAssets(address, marketData) {
       currentValueInGB: gbyteValue * currentBalance,
       currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
     }
-  }).filter(a => a);
+  }).filter(a => a).sort(function(a, b) {
+    return b.currentValueInGB - a.currentValueInGB;
+  });
 }
 
 function initToastr() {
