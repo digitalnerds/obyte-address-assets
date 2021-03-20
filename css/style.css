@@ -40,7 +40,7 @@ section {
 }
 
 section.address-input-section {
-    padding-top: 30%;
+    padding-top: 20%;
     transition: padding-top ease-in-out 0.2s;
 }
 
