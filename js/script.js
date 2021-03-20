@@ -136,7 +136,9 @@ async function getAddressAssets(address, marketData) {
   const balanceKeys = Object.keys(balance);
   return balanceKeys.map(key => {
     const asset = assetData[key];
-    if (!asset) return;
+    if (!asset && key !== 'base') {
+      return;
+    }
     const addressBalance = balance[key];
     const currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 9);
 
