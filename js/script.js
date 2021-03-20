@@ -98,8 +98,7 @@ async function getAssetDataFromAaVars() {
           return reject(err);
         }
         Object.keys(assetDescripitons).forEach(var_name => {
-          let assetID = var_name.replace('current_desc_', '');
-          descriptions[assetDescripitons[var_name]] = assetID;
+          descriptions[assetDescripitons[var_name]] = var_name.replace('current_desc_', '');
         });
         client.api.getAaStateVars({
           address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
@@ -128,12 +127,9 @@ async function getAddressAssets(address, marketData) {
     toastr.error('no balance for Obyte Address', 'Error');
     return;
   }
-  // const assetAddresses = _.chain(balance).keys().without('base').value();
-  // const assetData = await getAssetNames(assetAddresses);
+
   const assetData = await getAssetDataFromAaVars();
 
-  // const currentPrices = await fetch('https://data.ostable.org/api/v1/assets')
-  //   .then(response => response.json());
   const currentPrices = await fetch('https://referrals.ostable.org/prices')
     .then(response => response.json());
 
@@ -158,8 +154,6 @@ async function getAddressAssets(address, marketData) {
     }
     currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
 
-    // const currentGByteValue = _.find(currentPrices, {asset_id: key});
-    // const gbyteValue = currentGByteValue ? currentGByteValue.last_gbyte_value : 0;
     const gbyteValue = currentPrices.data[key] / currentGBytePrice || 0;
 
     return {
@@ -174,6 +168,8 @@ async function getAddressAssets(address, marketData) {
     return b.currentValueInGB - a.currentValueInGB;
   });
 }
+
+const obyteAddressInput = $('#input-obyte-address');
 
 function initToastr() {
   toastr.options = {
@@ -207,17 +203,17 @@ function initToastr() {
       return `<a href="#${item.address}" class="address">${item.address}</a><br>`;
     }))
     .then(hodlers => {
-      $('#hodlers-list').html(hodlers.slice(0, 10).join("\n"));
+      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
       $('#top-hodlers').removeClass('d-none');
     });
 
-  $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
-  if ($('#input-obyte-address').val()) {
+  obyteAddressInput.val(window.location.hash.replace(/^#/,''));
+  if (obyteAddressInput.val()) {
     getAssets();
   }
 
   $(window).bind( 'hashchange', function(e) {
-    $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
+    obyteAddressInput.val(window.location.hash.replace(/^#/,''));
     getAssets();
   });
 
@@ -226,9 +222,9 @@ function initToastr() {
     window.history.replaceState(null, null, document.location.pathname + '#' + $('#input-obyte-address').val());
     getAssets();
   });
-  
+
   async function getAssets() {
-    const address = $('#input-obyte-address').val();
+    const address = obyteAddressInput.val();
 
     if (address.length === 0) {
       return;
@@ -241,7 +237,6 @@ function initToastr() {
       return;
     }
     const addressAsset = await getAddressAssets(address, marketData);
-    console.log(addressAsset);
 
     const totalGB = addressAsset.reduce((sum, item) => {
       return sum + item.currentValueInGB;
@@ -337,6 +332,7 @@ function initToastr() {
       }
     });
 
+    $('#top-hodlers').addClass('d-none');
     $('#open-explorer').attr('href', `https://explorer.obyte.org/#${address}`);
     $('#open-explorer2').attr('href', `https://obyte.io/@${address}`);
     $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
