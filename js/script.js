@@ -1,4 +1,4 @@
-const client = new obyte.Client();
+const client = new obyte.Client('wss://obyte.org/bb', { reconnect: true });
 let chart;
 
 async function getObyteMarketData() {
