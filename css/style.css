@@ -1,0 +1,101 @@
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+}
+
+.background {
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    z-index: 0;
+    background: rgb(255, 103, 0);
+    background: -moz-linear-gradient(146deg, rgba(255, 103, 0, 1) 38%, rgba(255, 177, 0, 1) 100%);
+    background: -webkit-linear-gradient(146deg, rgba(255, 103, 0, 1) 38%, rgba(255, 177, 0, 1) 100%);
+    background: linear-gradient(146deg, rgba(255, 103, 0, 1) 38%, rgba(255, 177, 0, 1) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ff6700", endColorstr="#ffb100", GradientType=1);
+}
+
+a {
+    text-decoration: none;
+    color: #fff;
+}
+
+a:hover {
+    color: #FFFFFF;
+    text-shadow: 0 0 10px #FFFFFF;
+}
+
+h2 {
+    font-size: 1.3rem;
+}
+
+section {
+    position: relative;
+    z-index: 1;
+}
+
+section.address-input-section {
+    padding-top: 30%;
+    transition: padding-top ease-in-out 0.2s;
+}
+
+section.address-input-section.mini {
+    padding-top: 0;
+}
+
+.asset-name {
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    background: #ff6700;
+    border-radius: 500px;
+    color: #FFFFFF;
+    font-size: 12px;
+    text-align: center;
+}
+
+.amount {
+    font-size: 1.3rem;
+}
+
+.usd {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+#card-container {
+    padding-top: 60px;
+}
+
+.form-control {
+    border-radius: 0;
+    border-color: #FFFFFF;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #FFFFFF;
+    outline: 0 none;
+}
+
+.btn-primary {
+    background: #ff6700;
+    border-color: #FFFFFF;
+}
+
+.btn-primary:hover,.btn-primary:active, .btn-primary:focus {
+    background: #fff;
+    color: #ff6700;
+    border-color: #FFFFFF;
+    border-left: 1px solid #CCC;
+}
+
+.btn:focus {
+    box-shadow: none;
+    outline: 0 none;
+}
