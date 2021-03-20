@@ -134,6 +134,16 @@ function initToastr() {
 
   const template = $('#card-template')[0].innerHTML;
 
+  fetch('https://referrals.ostable.org/distributions/next')
+    .then(response => response.json())
+    .then(response_json => response_json.data.balances.map(item => {
+      return `<a href="#" class="address" onClick="$('#input-obyte-address').val($(this).text());$('#obyte-address-form').submit();return false;">${item.address}</a><br>`;
+    }))
+    .then(hodlers => {
+      $('#hodlers-list').html(hodlers.slice(0, 10).join("\n"));
+      $('#top-hodlers').removeClass('d-none');
+    });
+
   $('#obyte-address-form').on('submit', async (e) => {
     e.preventDefault();
     const obyteAddressInput = $('#input-obyte-address');

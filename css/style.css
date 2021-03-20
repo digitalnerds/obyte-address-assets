@@ -40,7 +40,7 @@ section {
 }
 
 section.address-input-section {
-    padding-top: 20%;
+    padding-top: 5%;
     transition: padding-top ease-in-out 0.2s;
 }
 
@@ -66,6 +66,11 @@ section.address-input-section.mini {
 .usd {
     font-size: 0.8rem;
     color: #888;
+}
+
+.address {
+    color: white;
+    font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
 }
 
 #card-container {
