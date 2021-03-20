@@ -1,4 +1,5 @@
 const client = new obyte.Client();
+let chart;
 
 async function getObyteMarketData() {
   const requestResult = await fetch('https://api.coinpaprika.com/v1/coins/gbyte-obyte/markets');
@@ -279,9 +280,8 @@ function initToastr() {
       $('#card-container').append(tmp);
     });
 
-    $('#chart').html('');
-
-    new Chart($('#chart'), {
+    if (chart) chart.destroy();
+    chart = new Chart($('#chart'), {
       type: 'doughnut',
       data: {
         datasets: [{
