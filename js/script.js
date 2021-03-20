@@ -1,4 +1,5 @@
-const client = new obyte.Client();
+const client = new obyte.Client('wss://obyte.org/bb', { reconnect: true });
+let chart;
 
 async function getObyteMarketData() {
   const requestResult = await fetch('https://api.coinpaprika.com/v1/coins/gbyte-obyte/markets');
@@ -52,7 +53,7 @@ async function getAssetData(address) {
 }
 
 async function getBalances(address) {
-  return new Promise(((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     client.api.getBalances([address], function (err, result) {
 
       if (err) {
@@ -61,7 +62,7 @@ async function getBalances(address) {
 
       return resolve(result[address]);
     });
-  }))
+  });
 }
 
 async function getAssetNames(assetAddresses) {
@@ -73,21 +74,76 @@ async function getAssetNames(assetAddresses) {
   return assets;
 }
 
+async function getAssetDataFromAaVars() {
+  const assets = {};
+  const descriptions = {};
+  return new Promise((resolve, reject) => {
+    client.api.getAaStateVars({
+      address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+      var_prefix: `a2s_`,
+    }, function(err, assetNames) {
+      if (err) {
+        return reject(err);
+      }
+      Object.keys(assetNames).forEach(var_name => {
+        let assetID = var_name.replace('a2s_', '');
+        assets[assetID] = assets[assetID] || {};
+        assets[assetID].name = assetNames[var_name];
+      });
+      client.api.getAaStateVars({
+        address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+        var_prefix: `current_desc_`,
+      }, function(err, assetDescripitons) {
+        if (err) {
+          return reject(err);
+        }
+        Object.keys(assetDescripitons).forEach(var_name => {
+          let assetID = var_name.replace('current_desc_', '');
+          descriptions[assetDescripitons[var_name]] = assetID;
+        });
+        client.api.getAaStateVars({
+          address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+          var_prefix: `decimals_`,
+        }, function(err, assetDecimals) {
+          if (err) {
+            return reject(err);
+          }
+          Object.keys(assetDecimals).forEach(var_name => {
+            let descriptionID = var_name.replace('decimals_', '');
+            let assetID = descriptions[descriptionID];
+            assets[assetID] = assets[assetID] || {};
+            assets[assetID].decimal = assetDecimals[var_name];
+          });
+          return resolve(assets);
+        });
+      });
+    });
+  });
+}
+
 async function getAddressAssets(address, marketData) {
   const currentGBytePrice = marketData.averageUSDPrice;
   const balance = await getBalances(address);
-  const assetAddresses = _.chain(balance).keys().without('base').value();
-  const assetData = await getAssetNames(assetAddresses);
+  // const assetAddresses = _.chain(balance).keys().without('base').value();
+  // const assetData = await getAssetNames(assetAddresses);
+  const assetData = await getAssetDataFromAaVars();
+
+  // const currentPrices = await fetch('https://data.ostable.org/api/v1/assets')
+  //   .then(response => response.json());
+  const currentPrices = await fetch('https://referrals.ostable.org/prices')
+    .then(response => response.json());
 
   const balanceKeys = Object.keys(balance);
-  const currentPrices = await fetch('https://data.ostable.org/api/v1/assets')
-    .then(response => response.json());
   return balanceKeys.map(key => {
     const asset = assetData[key];
+    if (!asset && key !== 'base') {
+      return;
+    }
     const addressBalance = balance[key];
-    const currentBalance = addressBalance.total / Math.pow(10, asset ? asset.decimal : 9);
+    let currentBalance;
 
     if (key === 'base') {
+      currentBalance = addressBalance.total / Math.pow(10, 9);
       return {
         balance: currentBalance,
         baseBalance: addressBalance.total,
@@ -96,16 +152,22 @@ async function getAddressAssets(address, marketData) {
         unit: 'GBYTE'
       }
     }
+    currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
 
-    const currentGByteValue = _.find(currentPrices, {asset_id: key});
+    // const currentGByteValue = _.find(currentPrices, {asset_id: key});
+    // const gbyteValue = currentGByteValue ? currentGByteValue.last_gbyte_value : 0;
+    const gbyteValue = currentPrices.data[key] / currentGBytePrice || 0;
+
     return {
       balance: currentBalance,
       baseBalance: addressBalance.total,
       decimal: asset.decimal,
       unit: asset.name,
-      currentValueInGB: currentGByteValue.last_gbyte_value * currentBalance,
-      currentValueInUSD: currentGByteValue.last_gbyte_value * currentBalance * currentGBytePrice,
+      currentValueInGB: gbyteValue * currentBalance,
+      currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
     }
+  }).filter(a => a).sort(function(a, b) {
+    return b.currentValueInGB - a.currentValueInGB;
   });
 }
 
@@ -132,12 +194,37 @@ function initToastr() {
 (async () => {
   initToastr();
 
+  const marketData = await getObyteMarketData();
   const template = $('#card-template')[0].innerHTML;
 
-  $('#obyte-address-form').on('submit', async (e) => {
+  fetch('https://referrals.ostable.org/distributions/next')
+    .then(response => response.json())
+    .then(response_json => response_json.data.balances.map(item => {
+      return `<a href="#${item.address}" class="address">${item.address}</a><br>`;
+    }))
+    .then(hodlers => {
+      $('#hodlers-list').html(hodlers.slice(0, 10).join("\n"));
+      $('#top-hodlers').removeClass('d-none');
+    });
+
+  $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
+  if ($('#input-obyte-address').val()) {
+    getAssets();
+  }
+
+  $(window).bind( 'hashchange', function(e) {
+    $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
+    getAssets();
+  });
+
+  $('#obyte-address-form').on('submit', (e) => {
     e.preventDefault();
-    const obyteAddressInput = $('#input-obyte-address');
-    const address = obyteAddressInput.val();
+    window.history.replaceState(null, null, document.location.pathname + '#' + $('#input-obyte-address').val());
+    getAssets();
+  });
+  
+  async function getAssets() {
+    const address = $('#input-obyte-address').val();
 
     if (address.length === 0) {
       return;
@@ -149,8 +236,8 @@ function initToastr() {
       toastr.error('Invalid Obyte Address', 'Error');
       return;
     }
-    const marketData = await getObyteMarketData();
     const addressAsset = await getAddressAssets(address, marketData);
+    console.log(addressAsset);
 
     const totalGB = addressAsset.reduce((sum, item) => {
       return sum + item.currentValueInGB;
@@ -165,21 +252,41 @@ function initToastr() {
     const chartAssetValueInGB = [];
     const chartAssetName = [];
 
+    $('#card-container').html('');
     addressAsset.forEach(asset => {
 
-      chartAssetValueInGB.push(asset.currentValueInGB.toFixed(4));
+      chartAssetValueInGB.push(asset.currentValueInGB.toFixed(3));
       chartAssetName.push(asset.unit);
 
+      let assetStyle = '';
+      if (asset.unit.startsWith("OPT-")) {
+        assetStyle = 'background: #008080;';
+      }
+      else if (asset.unit.endsWith("ARB")) {
+        assetStyle = 'background: #800080;';
+      }
+      else if (asset.unit.startsWith("GR")) {
+        assetStyle = 'background: red;';
+      }
+      else if (asset.unit.startsWith("O")) {
+        assetStyle = 'background: green;';
+      }
+      else if (asset.unit.startsWith("I")) {
+        assetStyle = 'background: blue;';
+      }
+
       const tmp = template
-        .replace('{{asset}}', asset.unit)
-        .replace('{{amount}}', asset.balance.toFixed(6))
-        .replace('{{amountInGB}}', asset.currentValueInGB.toFixed(2))
-        .replace('{{amountInUSD}}', asset.currentValueInUSD.toFixed(2))
+        .replace(/{{asset}}/g, asset.unit)
+        .replace(/{{assetStyle}}/g, assetStyle)
+        .replace(/{{amount}}/g, asset.balance.toFixed(asset.decimal || (asset.unit === 'GBYTE' ? 9 : 0)))
+        .replace(/{{amountInGB}}/g, asset.currentValueInGB.toFixed(3))
+        .replace(/{{amountInUSD}}/g, asset.currentValueInUSD.toFixed(2));
+
       $('#card-container').append(tmp);
     });
 
-
-    new Chart($('#chart'), {
+    if (chart) chart.destroy();
+    chart = new Chart($('#chart'), {
       type: 'doughnut',
       data: {
         datasets: [{
@@ -215,23 +322,25 @@ function initToastr() {
                 return previousValue + parseFloat(currentValue);
               }, 0);
 
-              const currentValue = dataset.data[tooltipItem.index];
-              const currentLabel = data.labels[tooltipItem.index];
+              const currentValue = parseFloat(dataset.data[tooltipItem.index]) || 0;
+              const currentLabel = data.labels[tooltipItem.index] || '';
 
               const precentage = Math.floor((currentValue / total) * 100);
-              return `${currentLabel} \n ${precentage}% ($${currentValue.toFixed(2)})`;
+              return `${currentLabel} \n ${precentage}% (${currentValue.toFixed(3)} GBYTE)`;
             }
           }
         }
       }
     });
 
-
-    $('#market-price').text('$' + marketData.averageUSDPrice.toFixed(2));
-    $('#total-gb').text(totalGB.toFixed(4) + 'GB');
-    $('#total-usd').text('$' + totalUSD.toFixed(2));
+    $('#open-explorer').attr('href', `https://explorer.obyte.org/#${address}`);
+    $('#open-explorer2').attr('href', `https://obyte.io/@${address}`);
+    $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
+    $('#market-price-reverse').text(`$1 = ${(1/marketData.averageUSDPrice).toFixed(9)} GBYTE`);
+    $('#total-gb').text(`${totalGB.toFixed(3)} GBYTE`);
+    $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
     $('#total-container').removeClass('d-none');
     $('#chart-container').removeClass('d-none');
-  });
+  }
 
 })();

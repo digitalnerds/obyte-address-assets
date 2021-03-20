@@ -20,14 +20,14 @@
         <div class="card-body">
           <div class="row align-items-center">
             <div class="col-3">
-              <div class="asset-name">
+              <div class="asset-name" style="{{assetStyle}}" title="{{asset}}">
                 {{asset}}
               </div>
             </div>
             <div class="col-9">
               <div class="px-3">
                 <div class="amount">{{amount}}</div>
-                <div class="usd">{{amountInGB}}GB | ${{amountInUSD}}</div>
+                <div class="usd">{{amountInGB}} GBYTE | ${{amountInUSD}}</div>
               </div>
             </div>
           </div>
@@ -46,7 +46,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-12">
+      <div class="col-12 col-lg-8 col-xl-6 mx-auto">
         <form id="obyte-address-form">
           <div class="input-group mb-3">
             <input type="text" class="form-control" aria-label="Recipient's username" id="input-obyte-address"
@@ -60,17 +60,31 @@
   </div>
 </section>
 
+<section id="top-hodlers" class="d-none">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center text-white pt-5 pb-5">
+        <h3>Top DeFi hodlers</h3>
+      </div>
+    </div>
+    <div class="row">
+      <div id="hodlers-list" class="text-center">
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="total-container" class="d-none">
   <div class="container">
     <div class="col-12 mt-5">
       <div class="card">
         <div class="card-body">
           <div class="row">
-            <div class="col-6 text-center">
+            <div class="col-12 col-sm-6 text-center">
               <small>Total</small>
               <h3 id="total-gb"></h3>
             </div>
-            <div class="col-6 text-center border-start">
+            <div class="col-12 col-sm-6 text-center border-start">
               <small>Total</small>
               <h3 id="total-usd"></h3>
             </div>
@@ -99,8 +113,11 @@
           <div class="card-body">
             <small>Current average Market Price</small>
             <div class="h2 mt-2" id="market-price"></div>
+            <div class="h2 mt-2" id="market-price-reverse"></div>
           </div>
         </div>
+        <a id="open-explorer" class="btn btn-primary mt-3" href="#" target="_blank">open address in explorer</a>
+        <a id="open-explorer2" class="btn btn-primary mt-3" href="#" target="_blank">open address on obyte.io</a>
       </div>
     </div>
   </div>
