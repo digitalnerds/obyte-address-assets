@@ -252,9 +252,9 @@ function initToastr() {
     });
 
 
-    $('#market-price').text('$' + marketData.averageUSDPrice.toFixed(2));
-    $('#total-gb').text(totalGB.toFixed(9) + 'GB');
-    $('#total-usd').text('$' + totalUSD.toFixed(2));
+    $('#market-price').text(`$${marketData.averageUSDPrice.toFixed(2)}`);
+    $('#total-gb').text(`${totalGB.toFixed(9)}GB`);
+    $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
     $('#total-container').removeClass('d-none');
     $('#chart-container').removeClass('d-none');
   }
