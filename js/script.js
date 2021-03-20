@@ -321,7 +321,7 @@ function initToastr() {
               const currentLabel = data.labels[tooltipItem.index] || '';
 
               const precentage = Math.floor((currentValue / total) * 100);
-              return `${currentLabel} \n ${precentage}% ($${currentValue.toFixed(2)})`;
+              return `${currentLabel} \n ${precentage}% (${currentValue.toFixed(3)} GBYTE)`;
             }
           }
         }
