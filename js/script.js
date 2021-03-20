@@ -124,6 +124,10 @@ async function getAssetDataFromAaVars() {
 async function getAddressAssets(address, marketData) {
   const currentGBytePrice = marketData.averageUSDPrice;
   const balance = await getBalances(address);
+  if (!balance) {
+    toastr.error('no balance for Obyte Address', 'Error');
+    return;
+  }
   // const assetAddresses = _.chain(balance).keys().without('base').value();
   // const assetData = await getAssetNames(assetAddresses);
   const assetData = await getAssetDataFromAaVars();
