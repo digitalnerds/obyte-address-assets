@@ -252,8 +252,8 @@ function initToastr() {
     });
 
 
-    $('#market-price').text(`$${marketData.averageUSDPrice.toFixed(2)}`);
-    $('#total-gb').text(`${totalGB.toFixed(3)}GB`);
+    $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
+    $('#total-gb').text(`${totalGB.toFixed(3)} GBYTE`);
     $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
     $('#total-container').removeClass('d-none');
     $('#chart-container').removeClass('d-none');
