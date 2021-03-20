@@ -145,6 +145,10 @@ function initToastr() {
     });
 
   $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
+  if ($('#input-obyte-address').val()) {
+    getAssets();
+  }
+
   $(window).bind( 'hashchange', function(e) {
     $('#input-obyte-address').val(window.location.hash.replace(/^#/,''));
     getAssets();
