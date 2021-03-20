@@ -52,7 +52,7 @@ async function getAssetData(address) {
 }
 
 async function getBalances(address) {
-  return new Promise(((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     client.api.getBalances([address], function (err, result) {
 
       if (err) {
@@ -61,7 +61,7 @@ async function getBalances(address) {
 
       return resolve(result[address]);
     });
-  }))
+  });
 }
 
 async function getAssetNames(assetAddresses) {
@@ -73,19 +73,71 @@ async function getAssetNames(assetAddresses) {
   return assets;
 }
 
+async function getAssetDataFromAaVars() {
+  const assets = {};
+  const descriptions = {};
+  return new Promise((resolve, reject) => {
+    client.api.getAaStateVars({
+      address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+      var_prefix: `a2s_`,
+    }, function(err, assetNames) {
+      if (err) {
+        return reject(err);
+      }
+      Object.keys(assetNames).forEach(var_name => {
+        let assetID = var_name.replace('a2s_', '');
+        assets[assetID] = assets[assetID] || {};
+        assets[assetID].name = assetNames[var_name];
+      });
+      client.api.getAaStateVars({
+        address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+        var_prefix: `current_desc_`,
+      }, function(err, assetDescripitons) {
+        if (err) {
+          return reject(err);
+        }
+        Object.keys(assetDescripitons).forEach(var_name => {
+          let assetID = var_name.replace('current_desc_', '');
+          descriptions[assetDescripitons[var_name]] = assetID;
+        });
+        client.api.getAaStateVars({
+          address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+          var_prefix: `decimals_`,
+        }, function(err, assetDecimals) {
+          if (err) {
+            return reject(err);
+          }
+          Object.keys(assetDecimals).forEach(var_name => {
+            let descriptionID = var_name.replace('decimals_', '');
+            let assetID = descriptions[descriptionID];
+            assets[assetID] = assets[assetID] || {};
+            assets[assetID].decimal = assetDecimals[var_name];
+          });
+          return resolve(assets);
+        });
+      });
+    });
+  });
+}
+
 async function getAddressAssets(address, marketData) {
   const currentGBytePrice = marketData.averageUSDPrice;
   const balance = await getBalances(address);
-  const assetAddresses = _.chain(balance).keys().without('base').value();
-  const assetData = await getAssetNames(assetAddresses);
+  // const assetAddresses = _.chain(balance).keys().without('base').value();
+  // const assetData = await getAssetNames(assetAddresses);
+  const assetData = await getAssetDataFromAaVars();
+
+  // const currentPrices = await fetch('https://data.ostable.org/api/v1/assets')
+  //   .then(response => response.json());
+  const currentPrices = await fetch('https://referrals.ostable.org/prices')
+    .then(response => response.json());
 
   const balanceKeys = Object.keys(balance);
-  const currentPrices = await fetch('https://data.ostable.org/api/v1/assets')
-    .then(response => response.json());
   return balanceKeys.map(key => {
     const asset = assetData[key];
+    if (!asset) return;
     const addressBalance = balance[key];
-    const currentBalance = addressBalance.total / Math.pow(10, asset ? asset.decimal : 9);
+    const currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 9);
 
     if (key === 'base') {
       return {
@@ -97,16 +149,19 @@ async function getAddressAssets(address, marketData) {
       }
     }
 
-    const currentGByteValue = _.find(currentPrices, {asset_id: key});
+    // const currentGByteValue = _.find(currentPrices, {asset_id: key});
+    // const gbyteValue = currentGByteValue ? currentGByteValue.last_gbyte_value : 0;
+    const gbyteValue = currentPrices.data[key] / currentGBytePrice || 0;
+
     return {
       balance: currentBalance,
       baseBalance: addressBalance.total,
       decimal: asset.decimal,
       unit: asset.name,
-      currentValueInGB: currentGByteValue.last_gbyte_value * currentBalance,
-      currentValueInUSD: currentGByteValue.last_gbyte_value * currentBalance * currentGBytePrice,
+      currentValueInGB: gbyteValue * currentBalance,
+      currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
     }
-  });
+  }).filter(a => a);
 }
 
 function initToastr() {
@@ -132,6 +187,7 @@ function initToastr() {
 (async () => {
   initToastr();
 
+  const marketData = await getObyteMarketData();
   const template = $('#card-template')[0].innerHTML;
 
   fetch('https://referrals.ostable.org/distributions/next')
@@ -173,7 +229,6 @@ function initToastr() {
       toastr.error('Invalid Obyte Address', 'Error');
       return;
     }
-    const marketData = await getObyteMarketData();
     const addressAsset = await getAddressAssets(address, marketData);
 
     const totalGB = addressAsset.reduce((sum, item) => {
@@ -213,15 +268,16 @@ function initToastr() {
       }
 
       const tmp = template
-        .replace('{{asset}}', asset.unit)
-        .replace('{{assetStyle}}', assetStyle)
-        .replace('{{amount}}', asset.balance.toFixed(asset.decimal || 9))
-        .replace('{{amountInGB}}', asset.currentValueInGB.toFixed(3))
-        .replace('{{amountInUSD}}', asset.currentValueInUSD.toFixed(2));
+        .replace(/{{asset}}/g, asset.unit)
+        .replace(/{{assetStyle}}/g, assetStyle)
+        .replace(/{{amount}}/g, asset.balance.toFixed(asset.decimal || 9))
+        .replace(/{{amountInGB}}/g, asset.currentValueInGB.toFixed(3))
+        .replace(/{{amountInUSD}}/g, asset.currentValueInUSD.toFixed(2));
 
       $('#card-container').append(tmp);
     });
 
+    $('#chart').html('');
 
     new Chart($('#chart'), {
       type: 'doughnut',

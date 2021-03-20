@@ -57,6 +57,7 @@ section.address-input-section.mini {
     color: #FFFFFF;
     font-size: 12px;
     text-align: center;
+    overflow: hidden;
 }
 
 .amount {
