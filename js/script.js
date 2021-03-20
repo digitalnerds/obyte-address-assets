@@ -278,7 +278,7 @@ function initToastr() {
       const tmp = template
         .replace(/{{asset}}/g, asset.unit)
         .replace(/{{assetStyle}}/g, assetStyle)
-        .replace(/{{amount}}/g, asset.balance.toFixed(asset.decimal || 9))
+        .replace(/{{amount}}/g, asset.balance.toFixed(asset.decimal || (asset.unit === 'GBYTE' ? 9 : 0)))
         .replace(/{{amountInGB}}/g, asset.currentValueInGB.toFixed(3))
         .replace(/{{amountInUSD}}/g, asset.currentValueInUSD.toFixed(2));
 
