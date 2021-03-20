@@ -140,9 +140,10 @@ async function getAddressAssets(address, marketData) {
       return;
     }
     const addressBalance = balance[key];
-    const currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 9);
+    let currentBalance;
 
     if (key === 'base') {
+      currentBalance = addressBalance.total / Math.pow(10, 9);
       return {
         balance: currentBalance,
         baseBalance: addressBalance.total,
@@ -151,6 +152,7 @@ async function getAddressAssets(address, marketData) {
         unit: 'GBYTE'
       }
     }
+    currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
 
     // const currentGByteValue = _.find(currentPrices, {asset_id: key});
     // const gbyteValue = currentGByteValue ? currentGByteValue.last_gbyte_value : 0;
@@ -235,6 +237,7 @@ function initToastr() {
       return;
     }
     const addressAsset = await getAddressAssets(address, marketData);
+    console.log(addressAsset);
 
     const totalGB = addressAsset.reduce((sum, item) => {
       return sum + item.currentValueInGB;
