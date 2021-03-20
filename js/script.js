@@ -192,13 +192,13 @@ function initToastr() {
     $('#card-container').html('');
     addressAsset.forEach(asset => {
 
-      chartAssetValueInGB.push(asset.currentValueInGB.toFixed(4));
+      chartAssetValueInGB.push(asset.currentValueInGB.toFixed(3));
       chartAssetName.push(asset.unit);
 
       const tmp = template
         .replace('{{asset}}', asset.unit)
-        .replace('{{amount}}', asset.balance.toFixed(6))
-        .replace('{{amountInGB}}', asset.currentValueInGB.toFixed(2))
+        .replace('{{amount}}', asset.balance.toFixed(asset.decimal || 9))
+        .replace('{{amountInGB}}', asset.currentValueInGB.toFixed(3))
         .replace('{{amountInUSD}}', asset.currentValueInUSD.toFixed(2))
       $('#card-container').append(tmp);
     });
@@ -253,7 +253,7 @@ function initToastr() {
 
 
     $('#market-price').text('$' + marketData.averageUSDPrice.toFixed(2));
-    $('#total-gb').text(totalGB.toFixed(4) + 'GB');
+    $('#total-gb').text(totalGB.toFixed(9) + 'GB');
     $('#total-usd').text('$' + totalUSD.toFixed(2));
     $('#total-container').removeClass('d-none');
     $('#chart-container').removeClass('d-none');
