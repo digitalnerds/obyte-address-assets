@@ -317,8 +317,8 @@ function initToastr() {
                 return previousValue + parseFloat(currentValue);
               }, 0);
 
-              const currentValue = dataset.data[tooltipItem.index];
-              const currentLabel = data.labels[tooltipItem.index];
+              const currentValue = parseFloat(dataset.data[tooltipItem.index]) || 0;
+              const currentLabel = data.labels[tooltipItem.index] || '';
 
               const precentage = Math.floor((currentValue / total) * 100);
               return `${currentLabel} \n ${precentage}% ($${currentValue.toFixed(2)})`;
