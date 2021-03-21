@@ -80,11 +80,42 @@ section.address-input-section.mini {
 
 .address {
     color: white;
-    font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
 }
 
 #card-container {
     padding-top: 60px;
+}
+
+#exchanges-container {
+    margin-top: 15px;
+}
+
+#exchanges-container small {
+    color: #AAA;
+    font-size: 0.7rem;
+}
+
+#exchanges-container a {
+    color: #333333;
+    display: block;
+    padding: 5px 10px;
+    border: 1px solid #333333;
+    margin: 5px 0;
+}
+
+#exchanges-container a:hover {
+    border-color: #ff6700;
+    color: #ff6700;
+}
+
+#exchanges-container a:hover small {
+    color: #ff6700;
+}
+
+.card {
+    height: 100%;
+    margin-bottom: 15px;
 }
 
 .form-control {
@@ -103,7 +134,7 @@ section.address-input-section.mini {
     border-color: #FFFFFF;
 }
 
-.btn-primary:hover,.btn-primary:active, .btn-primary:focus {
+.btn-primary:hover, .btn-primary:active, .btn-primary:focus {
     background: #fff;
     color: #ff6700;
     border-color: #FFFFFF;

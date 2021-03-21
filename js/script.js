@@ -1,220 +1,231 @@
 'use strict';
 
-const client = new obyte.Client('wss://obyte.org/bb', {reconnect: true});
-let chart;
+(async () => {
 
-async function getObyteMarketData() {
-  const requestResult = await fetch('https://api.coinpaprika.com/v1/coins/gbyte-obyte/markets');
-  const result = await requestResult.json();
+  const obyteAddressInput = $('#input-obyte-address');
+  const btnSubmit = $('#btn-submit');
+  const btnClear = $('#btn-clear');
+  const topHodlers = $('#top-hodlers');
+  const cardContainer = $('#card-container');
+  const totalContainer = $('#total-container');
+  const chartContainer = $('#chart-container');
+  const loadingContainer = $('#loading-container');
+  const exchangesContainer = $('#exchanges-container');
+  const addressLinksContainer = $('#address-links-container');
 
-  const exchangesPrices = result
-    .map(item => {
-      return {
-        exchangeId: item.exchange_id,
-        exchangeName: item.exchange_name,
-        price: item.quotes.USD.price
-      }
-    }).filter(item => {
-      return item.exchangeId === 'bittrex';
+  const template = $('#card-template')[0].innerHTML;
+
+  const client = new obyte.Client('wss://obyte.org/bb', {reconnect: true});
+  let chart;
+
+  async function getObyteMarketData() {
+    const requestResult = await fetch('https://api.coinpaprika.com/v1/coins/gbyte-obyte/markets');
+    const result = await requestResult.json();
+
+    const exchangesPrices = result
+      .map(item => {
+        return {
+          marketUrl: item.market_url,
+          pair: item.pair,
+          exchangeId: item.exchange_id,
+          exchangeName: item.exchange_name,
+          price: item.quotes.USD.price
+        }
+      }).filter(item => {
+        return ['bittrex', 'bit-z', 'cryptox'].includes(item.exchangeId);
+      });
+
+    const averageUSDPrice = exchangesPrices.reduce((sum, item) => {
+      return sum + item.price;
+    }, 0) / exchangesPrices.length;
+
+    exchangesPrices.forEach(market => {
+      exchangesContainer
+        .append(`<div class="col-6"><a class="text-center" href="${market.marketUrl}" target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
     });
 
-  const averageUSDPrice = exchangesPrices.reduce((sum, item) => {
-    return sum + item.price;
-  }, 0) / exchangesPrices.length;
-
-  return {
-    exchangesPrices,
-    averageUSDPrice
+    return {
+      exchangesPrices,
+      averageUSDPrice
+    }
   }
-}
 
-async function getAddressMetaData(address) {
-  return new Promise((resolve, reject) => {
-    client.api.getAssetMetadata(address, (err, result) => {
-      if (err) {
-        return reject(err);
-      }
-      return resolve(result);
-    });
-  })
-}
-
-async function getAssetData(address) {
-  return new Promise((resolve, reject) => {
-    client.api.getJoint(address, function (err, result) {
-      if (err) {
-        return reject(err);
-      }
-      const metaData = _.find(result.joint.unit.messages, {app: 'data'});
-      return resolve({
-        decimal: metaData.payload.decimals,
-        name: metaData.payload.name
-      });
-    });
-  });
-}
-
-async function getBalances(address) {
-  return new Promise((resolve, reject) => {
-    client.api.getBalances([address], function (err, result) {
-
-      if (err) {
-        return reject(err);
-      }
-
-      return resolve(result[address]);
-    });
-  });
-}
-
-async function getAssetNames(assetAddresses) {
-  const assets = {};
-  await Promise.all(assetAddresses.map(async address => {
-    const metaData = await getAddressMetaData(address);
-    assets[address] = await getAssetData(metaData.metadata_unit);
-  }));
-  return assets;
-}
-
-async function getAssetDataFromAaVars() {
-  const assets = {};
-  const descriptions = {};
-  return new Promise((resolve, reject) => {
-    client.api.getAaStateVars({
-      address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
-      var_prefix: `a2s_`,
-    }, function (err, assetNames) {
-      if (err) {
-        return reject(err);
-      }
-      Object.keys(assetNames).forEach(var_name => {
-        let assetID = var_name.replace('a2s_', '');
-        assets[assetID] = assets[assetID] || {};
-        assets[assetID].name = assetNames[var_name];
-      });
-      client.api.getAaStateVars({
-        address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
-        var_prefix: `current_desc_`,
-      }, function (err, assetDescripitons) {
+  async function getAddressMetaData(address) {
+    return new Promise((resolve, reject) => {
+      client.api.getAssetMetadata(address, (err, result) => {
         if (err) {
           return reject(err);
         }
-        Object.keys(assetDescripitons).forEach(var_name => {
-          descriptions[assetDescripitons[var_name]] = var_name.replace('current_desc_', '');
-        });
-        client.api.getAaStateVars({
-          address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
-          var_prefix: `decimals_`,
-        }, function (err, assetDecimals) {
-          if (err) {
-            return reject(err);
-          }
-          Object.keys(assetDecimals).forEach(var_name => {
-            let descriptionID = var_name.replace('decimals_', '');
-            let assetID = descriptions[descriptionID];
-            assets[assetID] = assets[assetID] || {};
-            assets[assetID].decimal = assetDecimals[var_name];
-          });
-          return resolve(assets);
+        return resolve(result);
+      });
+    })
+  }
+
+  async function getAssetData(address) {
+    return new Promise((resolve, reject) => {
+      client.api.getJoint(address, function (err, result) {
+        if (err) {
+          return reject(err);
+        }
+        const metaData = _.find(result.joint.unit.messages, {app: 'data'});
+        return resolve({
+          decimal: metaData.payload.decimals,
+          name: metaData.payload.name
         });
       });
     });
-  });
-}
-
-async function getAddressAssets(address, marketData) {
-  const currentGBytePrice = marketData.averageUSDPrice;
-  const balance = await getBalances(address);
-  if (!balance) {
-    toastr.error('no balance for Obyte Address', 'Error');
-    return;
   }
 
-  const assetData = await getAssetDataFromAaVars();
+  async function getBalances(address) {
+    return new Promise((resolve, reject) => {
+      client.api.getBalances([address], function (err, result) {
 
-  const currentPrices = await fetch('https://referrals.ostable.org/prices')
-    .then(response => response.json());
+        if (err) {
+          return reject(err);
+        }
 
-  const balanceKeys = Object.keys(balance);
-  return balanceKeys.map(key => {
-    const asset = assetData[key];
-    if (!asset && key !== 'base') {
+        return resolve(result[address]);
+      });
+    });
+  }
+
+  async function getAssetNames(assetAddresses) {
+    const assets = {};
+    await Promise.all(assetAddresses.map(async address => {
+      const metaData = await getAddressMetaData(address);
+      assets[address] = await getAssetData(metaData.metadata_unit);
+    }));
+    return assets;
+  }
+
+  async function getAssetDataFromAaVars() {
+    const assets = {};
+    const descriptions = {};
+    return new Promise((resolve, reject) => {
+      client.api.getAaStateVars({
+        address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+        var_prefix: `a2s_`,
+      }, function (err, assetNames) {
+        if (err) {
+          return reject(err);
+        }
+        Object.keys(assetNames).forEach(var_name => {
+          let assetID = var_name.replace('a2s_', '');
+          assets[assetID] = assets[assetID] || {};
+          assets[assetID].name = assetNames[var_name];
+        });
+        client.api.getAaStateVars({
+          address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+          var_prefix: `current_desc_`,
+        }, function (err, assetDescripitons) {
+          if (err) {
+            return reject(err);
+          }
+          Object.keys(assetDescripitons).forEach(var_name => {
+            descriptions[assetDescripitons[var_name]] = var_name.replace('current_desc_', '');
+          });
+          client.api.getAaStateVars({
+            address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
+            var_prefix: `decimals_`,
+          }, function (err, assetDecimals) {
+            if (err) {
+              return reject(err);
+            }
+            Object.keys(assetDecimals).forEach(var_name => {
+              let descriptionID = var_name.replace('decimals_', '');
+              let assetID = descriptions[descriptionID];
+              assets[assetID] = assets[assetID] || {};
+              assets[assetID].decimal = assetDecimals[var_name];
+            });
+            return resolve(assets);
+          });
+        });
+      });
+    });
+  }
+
+  async function getAddressAssets(address, marketData) {
+    const currentGBytePrice = marketData.averageUSDPrice;
+    const balance = await getBalances(address);
+    if (!balance) {
+      toastr.error('no balance for Obyte Address', 'Error');
       return;
     }
-    const addressBalance = balance[key];
-    let currentBalance;
 
-    if (key === 'base') {
-      currentBalance = addressBalance.total / Math.pow(10, 9);
+    const assetData = await getAssetDataFromAaVars();
+
+    const currentPrices = await fetch('https://referrals.ostable.org/prices')
+      .then(response => response.json());
+
+    const balanceKeys = Object.keys(balance);
+    return balanceKeys.map(key => {
+      const asset = assetData[key];
+      if (!asset && key !== 'base') {
+        return;
+      }
+
+      const addressBalance = balance[key];
+      let currentBalance;
+
+      if (key === 'base') {
+        currentBalance = addressBalance.total / Math.pow(10, 9);
+        return {
+          balance: currentBalance,
+          baseBalance: addressBalance.total,
+          currentValueInGB: currentBalance,
+          currentValueInUSD: currentBalance * currentGBytePrice,
+          unit: 'GBYTE'
+        }
+      }
+      currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
+
+      const gbyteValue = currentPrices.data[key] / currentGBytePrice || 0;
+
       return {
         balance: currentBalance,
         baseBalance: addressBalance.total,
-        currentValueInGB: currentBalance,
-        currentValueInUSD: currentBalance * currentGBytePrice,
-        unit: 'GBYTE'
+        decimal: asset.decimal,
+        unit: asset.name,
+        currentValueInGB: gbyteValue * currentBalance,
+        currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
       }
-    }
-    currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
-
-    const gbyteValue = currentPrices.data[key] / currentGBytePrice || 0;
-
-    return {
-      balance: currentBalance,
-      baseBalance: addressBalance.total,
-      decimal: asset.decimal,
-      unit: asset.name,
-      currentValueInGB: gbyteValue * currentBalance,
-      currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
-    }
-  }).filter(a => a).sort(function (a, b) {
-    return b.currentValueInGB - a.currentValueInGB;
-  });
-}
-
-function getTopHodlers() {
-  fetch('https://referrals.ostable.org/distributions/next')
-    .then(response => response.json())
-    .then(response_json => response_json.data.balances.map((item, index) => {
-      return `<a href="#/${item.address}" class="address">${index + 1}. ${item.address}</a><br>`;
-    }))
-    .then(hodlers => {
-      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
-      $('#top-hodlers').removeClass('d-none');
+    }).filter(a => a).sort(function (a, b) {
+      return b.currentValueInGB - a.currentValueInGB;
     });
-}
-
-const obyteAddressInput = $('#input-obyte-address');
-const btnSubmit = $('#btn-submit');
-const btnClear = $('#btn-clear');
-const topHodlers = $('#top-hodlers');
-const cardContainer = $('#card-container');
-const totalContainer = $('#total-container');
-const chartContainer = $('#chart-container');
-const loadingContainer = $('loading-container');
-
-const template = $('#card-template')[0].innerHTML;
-
-function initToastr() {
-  toastr.options = {
-    closeButton: false,
-    debug: false,
-    newestOnTop: false,
-    progressBar: true,
-    positionClass: 'toast-top-right',
-    preventDuplicates: true,
-    onclick: null,
-    showDuration: 300,
-    hideDuration: 1000,
-    timeOut: 5000,
-    extendedTimeOut: 1000,
-    showEasing: 'swing',
-    hideEasing: 'linear',
-    showMethod: 'fadeIn',
-    hideMethod: 'fadeOut'
   }
-}
 
-(async () => {
+  function getTopHodlers() {
+    fetch('https://referrals.ostable.org/distributions/next')
+      .then(response => response.json())
+      .then(response_json => response_json.data.balances.map(item => {
+        return `<a href="#/${item.address}" class="address">${item.address}</a><br>`;
+      }))
+      .then(hodlers => {
+        $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
+        $('#top-hodlers').removeClass('d-none');
+      });
+  }
+
+  function initToastr() {
+    toastr.options = {
+      closeButton: false,
+      debug: false,
+      newestOnTop: false,
+      progressBar: true,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+      onclick: null,
+      showDuration: 300,
+      hideDuration: 1000,
+      timeOut: 5000,
+      extendedTimeOut: 1000,
+      showEasing: 'swing',
+      hideEasing: 'linear',
+      showMethod: 'fadeIn',
+      hideMethod: 'fadeOut'
+    }
+  }
+
   async function getAssets() {
     const address = obyteAddressInput.val();
 
@@ -233,6 +244,8 @@ function initToastr() {
     loadingContainer.removeClass('d-none');
 
     const addressAsset = await getAddressAssets(address, marketData);
+
+    console.log(addressAsset);
 
     const totalGB = addressAsset.reduce((sum, item) => {
       return sum + item.currentValueInGB;
@@ -270,13 +283,15 @@ function initToastr() {
         .replace(/{{asset}}/g, asset.unit)
         .replace(/{{assetStyle}}/g, assetStyle)
         .replace(/{{amount}}/g, asset.balance.toFixed(asset.decimal || (asset.unit === 'GBYTE' ? 9 : 0)))
-        .replace(/{{amountInGB}}/g, asset.currentValueInGB.toFixed(3))
-        .replace(/{{amountInUSD}}/g, asset.currentValueInUSD.toFixed(2));
+        .replace(/{{amountInGB}}/g, Number(asset.currentValueInGB.toFixed(3)).toLocaleString())
+        .replace(/{{amountInUSD}}/g, Number(asset.currentValueInUSD.toFixed(2)).toLocaleString());
 
       $('#card-container').append(tmp);
     });
 
-    if (chart) chart.destroy();
+    if (chart) {
+      chart.destroy();
+    }
     chart = new Chart($('#chart'), {
       type: 'doughnut',
       data: {
@@ -298,7 +313,7 @@ function initToastr() {
       },
       options: {
         legend: {
-          display: true,
+          display: false,
           position: 'right',
           align: 'center',
           labels: {
@@ -328,15 +343,17 @@ function initToastr() {
     $('#open-explorer2').attr('href', `https://obyte.io/@${address}`);
     $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
     $('#market-price-reverse').text(`$1 = ${(1 / marketData.averageUSDPrice).toFixed(9)} GBYTE`);
-    $('#total-gb').text(`${totalGB.toFixed(3)} GBYTE`);
-    $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
+    $('#total-gb').text(`${Number(totalGB.toFixed(3)).toLocaleString()} GBYTE`);
+    $('#total-usd').text(`$${Number(totalUSD.toFixed(2)).toLocaleString()}`);
     loadingContainer.addClass('d-none');
+    addressLinksContainer.removeClass('d-none');
     btnSubmit.addClass('d-none');
     totalContainer.removeClass('d-none');
     chartContainer.removeClass('d-none');
     btnClear.removeClass('d-none');
 
   }
+
   initToastr();
   const marketData = await getObyteMarketData();
 
@@ -364,10 +381,11 @@ function initToastr() {
     cardContainer.html('');
     totalContainer.addClass('d-none');
     chartContainer.addClass('d-none');
+    addressLinksContainer.addClass('d-none');
     topHodlers.removeClass('d-none');
     btnSubmit.removeClass('d-none');
     btnClear.addClass('d-none');
-    window.history.replaceState(null, null, document.location.pathname);
+    window.history.pushState(null, null, document.location.pathname);
     getTopHodlers();
   });
 
