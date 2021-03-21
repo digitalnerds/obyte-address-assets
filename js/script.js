@@ -40,7 +40,7 @@
 
     exchangesPrices.forEach(market => {
       exchangesContainer
-        .append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ' href="+ market.marketUrl +"' : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
+        .append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ` href="${market.marketUrl}"` : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
     });
 
     return {
