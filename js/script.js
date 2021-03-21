@@ -61,6 +61,17 @@
     })
   }
 
+  async function getAddressData(address) {
+    return new Promise((resolve, reject) => {
+      client.api.getJoint(address, (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(result);
+      });
+    })
+  }
+
   async function getAssetData(address) {
     return new Promise((resolve, reject) => {
       client.api.getJoint(address, function (err, result) {
@@ -158,7 +169,7 @@
       .then(response => response.json());
 
     const balanceKeys = Object.keys(balance);
-    return balanceKeys.map(key => {
+    const assets = await Promise.all(balanceKeys.map(async key => {
       const asset = assetData[key];
       if (!asset && key !== 'base') {
         return;
@@ -189,7 +200,9 @@
         currentValueInGB: gbyteValue * currentBalance,
         currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
       }
-    }).filter(a => a).sort(function (a, b) {
+    }));
+
+    return assets.filter(a => a).sort(function (a, b) {
       return b.currentValueInGB - a.currentValueInGB;
     });
   }
@@ -204,6 +217,20 @@
         $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
         $('#top-hodlers').removeClass('d-none');
       });
+  }
+
+  function clear() {
+    $('.address-input-section').removeClass('mini');
+    obyteAddressInput.val('');
+    cardContainer.html('');
+    totalContainer.addClass('d-none');
+    chartContainer.addClass('d-none');
+    addressLinksContainer.addClass('d-none');
+    topHodlers.removeClass('d-none');
+    btnSubmit.removeClass('d-none');
+    btnClear.addClass('d-none');
+    window.history.pushState(null, null, document.location.pathname);
+    getTopHodlers();
   }
 
   function initToastr() {
@@ -245,8 +272,6 @@
 
     const addressAsset = await getAddressAssets(address, marketData);
 
-    console.log(addressAsset);
-
     const totalGB = addressAsset.reduce((sum, item) => {
       return sum + item.currentValueInGB;
     }, 0);
@@ -262,7 +287,6 @@
 
     cardContainer.html('');
     addressAsset.forEach(asset => {
-
       chartAssetValueInGB.push(asset.currentValueInGB.toFixed(3));
       chartAssetName.push(asset.unit);
 
@@ -313,12 +337,7 @@
       },
       options: {
         legend: {
-          display: false,
-          position: 'right',
-          align: 'center',
-          labels: {
-            fontColor: 'rgb(255, 99, 132)'
-          }
+          display: false
         },
         tooltips: {
           callbacks: {
@@ -351,7 +370,7 @@
     totalContainer.removeClass('d-none');
     chartContainer.removeClass('d-none');
     btnClear.removeClass('d-none');
-
+    $('.card-asset-container').matchHeight();
   }
 
   initToastr();
@@ -361,11 +380,17 @@
   if (obyteAddressInput.val()) {
     getAssets();
   } else {
-    getTopHodlers();
+    clear();
   }
 
   $(window).bind('hashchange', function (e) {
-    obyteAddressInput.val(window.location.hash.replace(/^#\//, ''));
+    const address = window.location.hash.replace(/^#\//, '');
+
+    if (!address || address.length === 0) {
+      clear();
+      return;
+    }
+    obyteAddressInput.val(address);
     getAssets();
   });
 
@@ -376,17 +401,11 @@
   });
 
   btnClear.on('click', () => {
-    $('.address-input-section').removeClass('mini');
-    obyteAddressInput.val('');
-    cardContainer.html('');
-    totalContainer.addClass('d-none');
-    chartContainer.addClass('d-none');
-    addressLinksContainer.addClass('d-none');
-    topHodlers.removeClass('d-none');
-    btnSubmit.removeClass('d-none');
-    btnClear.addClass('d-none');
-    window.history.pushState(null, null, document.location.pathname);
-    getTopHodlers();
+    clear();
+  });
+
+  $(document).on('click', '.coming-soon', () => {
+    alert('Coming Soon');
   });
 
 

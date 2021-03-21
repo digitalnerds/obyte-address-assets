@@ -38,9 +38,27 @@
               </div>
             </div>
             <div class="col-9">
-              <div class="px-3">
-                <div class="amount">{{amount}}</div>
-                <div class="usd">{{amountInGB}} GBYTE | ${{amountInUSD}}</div>
+              <div class="px-3 justify-content-center">
+                <div class="card-asset-container">
+                  <div class="amount">{{amount}}</div>
+                  <div class="usd">{{amountInGB}} GBYTE | ${{amountInUSD}}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-links-container">
+            <div class="row">
+              <div class="col-6">
+                <a class="d-block text-center coming-soon">
+                  Detail
+                </a>
+              </div>
+              <div class="col-6 border-start">
+                <a class="d-block text-center coming-soon">
+                  Swap
+                </a>
               </div>
             </div>
           </div>
@@ -127,7 +145,7 @@
 
 <section id="chart-container" class="d-none">
   <div class="container">
-    <div class="row align-items-center">
+    <div class="row align-items-stretch">
       <div class="col-12 col-md-6 mt-5">
         <div class="card">
           <div class="card-body">
@@ -177,6 +195,7 @@
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.matchHeight/0.7.2/jquery.matchHeight-min.js" integrity="sha512-/bOVV1DV1AQXcypckRwsR9ThoCj7FqTV2/0Bm79bL3YSyLkVideFLE3MIZkq1u5t28ke1c0n31WYCOrO01dsUg==" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/obyte"></script>
 <script src="./js/script.js"></script>
 

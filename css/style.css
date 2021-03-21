@@ -118,6 +118,26 @@ section.address-input-section.mini {
     margin-bottom: 15px;
 }
 
+.card-footer {
+    background: #FFFFFF;
+}
+
+.card-asset-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card-links-container a {
+    font-size: 0.8rem;
+    color: #ff6700;
+    cursor: pointer;
+}
+
+.card-links-container a:hover {
+    text-shadow: 0 0 10px #ff6700;
+}
+
 .form-control {
     border-radius: 0;
     border-color: #FFFFFF;
