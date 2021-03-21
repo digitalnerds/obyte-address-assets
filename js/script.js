@@ -31,7 +31,7 @@
           price: item.quotes.USD.price
         }
       }).filter(item => {
-        return ['bittrex', 'bit-z', 'cryptox'].includes(item.exchangeId);
+        return ['bittrex', 'bit-z', 'cryptox', 'bitladon'].includes(item.exchangeId);
       });
 
     const averageUSDPrice = exchangesPrices.reduce((sum, item) => {
@@ -40,7 +40,7 @@
 
     exchangesPrices.forEach(market => {
       exchangesContainer
-        .append(`<div class="col-6"><a class="text-center" href="${market.marketUrl}" target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
+        .append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ' href="+ market.marketUrl +"' : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
     });
 
     return {
@@ -367,7 +367,6 @@
     totalContainer.removeClass('d-none');
     chartContainer.removeClass('d-none');
     btnClear.removeClass('d-none');
-    $('.card-asset-container').matchHeight();
   }
 
   initToastr();
