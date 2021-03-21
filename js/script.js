@@ -3,7 +3,6 @@
 (async () => {
 
   const obyteAddressInput = $('#input-obyte-address');
-  const btnSubmit = $('#btn-submit');
   const btnClear = $('#btn-clear');
   const topHodlers = $('#top-hodlers');
   const cardContainer = $('#card-container');
@@ -227,7 +226,6 @@
     chartContainer.addClass('d-none');
     addressLinksContainer.addClass('d-none');
     topHodlers.removeClass('d-none');
-    btnSubmit.removeClass('d-none');
     btnClear.addClass('d-none');
     window.history.pushState(null, null, document.location.pathname);
     getTopHodlers();
@@ -366,7 +364,6 @@
     $('#total-usd').text(`$${Number(totalUSD.toFixed(2)).toLocaleString()}`);
     loadingContainer.addClass('d-none');
     addressLinksContainer.removeClass('d-none');
-    btnSubmit.addClass('d-none');
     totalContainer.removeClass('d-none');
     chartContainer.removeClass('d-none');
     btnClear.removeClass('d-none');
