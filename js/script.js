@@ -359,6 +359,7 @@ function initToastr() {
   });
 
   btnClear.on('click', () => {
+    $('.address-input-section').removeClass('mini');
     obyteAddressInput.val('');
     cardContainer.html('');
     totalContainer.addClass('d-none');
