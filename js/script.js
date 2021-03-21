@@ -367,6 +367,7 @@ function initToastr() {
     btnSubmit.removeClass('d-none');
     btnClear.addClass('d-none');
     window.history.replaceState(null, null, document.location.pathname);
+    getTopHodlers();
   });
 
 
