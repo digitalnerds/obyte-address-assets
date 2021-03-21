@@ -176,6 +176,7 @@ const topHodlers = $('#top-hodlers');
 const cardContainer = $('#card-container');
 const totalContainer = $('#total-container');
 const chartContainer = $('#chart-container');
+const loadingContainer = $('loading-container');
 
 
 
@@ -213,6 +214,10 @@ function initToastr() {
       toastr.error('Invalid Obyte Address', 'Error');
       return;
     }
+
+    topHodlers.addClass('d-none');
+    loadingContainer.removeClass('d-none');
+
     const addressAsset = await getAddressAssets(address, marketData);
 
     const totalGB = addressAsset.reduce((sum, item) => {
@@ -315,11 +320,12 @@ function initToastr() {
     $('#market-price-reverse').text(`$1 = ${(1/marketData.averageUSDPrice).toFixed(9)} GBYTE`);
     $('#total-gb').text(`${totalGB.toFixed(3)} GBYTE`);
     $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
-    topHodlers.addClass('d-none');
+    loadingContainer.addClass('d-none');
+    btnSubmit.addClass('d-none');
     totalContainer.removeClass('d-none');
     chartContainer.removeClass('d-none');
-    btnSubmit.addClass('d-none');
     btnClear.removeClass('d-none');
+
   }
 
   initToastr();
@@ -330,37 +336,38 @@ function initToastr() {
   fetch('https://referrals.ostable.org/distributions/next')
     .then(response => response.json())
     .then(response_json => response_json.data.balances.map(item => {
-      return `<a href="#${item.address}" class="address">${item.address}</a><br>`;
+      return `<a href="#/${item.address}" class="address">${item.address}</a><br>`;
     }))
     .then(hodlers => {
       $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
       $('#top-hodlers').removeClass('d-none');
     });
 
-  obyteAddressInput.val(window.location.hash.replace(/^#/,''));
+  obyteAddressInput.val(window.location.hash.replace(/^#\//,''));
   if (obyteAddressInput.val()) {
     getAssets();
   }
 
   $(window).bind( 'hashchange', function(e) {
-    obyteAddressInput.val(window.location.hash.replace(/^#/,''));
+    obyteAddressInput.val(window.location.hash.replace(/^#\//,''));
     getAssets();
   });
 
   $('#obyte-address-form').on('submit', (e) => {
     e.preventDefault();
-    window.history.replaceState(null, null, document.location.pathname + '#' + $('#input-obyte-address').val());
+    window.history.replaceState(null, null, document.location.pathname + '#/' + obyteAddressInput.val());
     getAssets();
   });
 
   btnClear.on('click', () => {
-    obyteAddressInput.text('');
+    obyteAddressInput.val('');
     cardContainer.html('');
     totalContainer.addClass('d-none');
     chartContainer.addClass('d-none');
     topHodlers.removeClass('d-none');
     btnSubmit.removeClass('d-none');
     btnClear.addClass('d-none');
+    window.history.replaceState(null, null, document.location.pathname);
   });
 
 
