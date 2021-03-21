@@ -1,4 +1,6 @@
-const client = new obyte.Client('wss://obyte.org/bb', { reconnect: true });
+'use strict';
+
+const client = new obyte.Client('wss://obyte.org/bb', {reconnect: true});
 let chart;
 
 async function getObyteMarketData() {
@@ -81,7 +83,7 @@ async function getAssetDataFromAaVars() {
     client.api.getAaStateVars({
       address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
       var_prefix: `a2s_`,
-    }, function(err, assetNames) {
+    }, function (err, assetNames) {
       if (err) {
         return reject(err);
       }
@@ -93,7 +95,7 @@ async function getAssetDataFromAaVars() {
       client.api.getAaStateVars({
         address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
         var_prefix: `current_desc_`,
-      }, function(err, assetDescripitons) {
+      }, function (err, assetDescripitons) {
         if (err) {
           return reject(err);
         }
@@ -103,7 +105,7 @@ async function getAssetDataFromAaVars() {
         client.api.getAaStateVars({
           address: 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ',
           var_prefix: `decimals_`,
-        }, function(err, assetDecimals) {
+        }, function (err, assetDecimals) {
           if (err) {
             return reject(err);
           }
@@ -164,9 +166,21 @@ async function getAddressAssets(address, marketData) {
       currentValueInGB: gbyteValue * currentBalance,
       currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
     }
-  }).filter(a => a).sort(function(a, b) {
+  }).filter(a => a).sort(function (a, b) {
     return b.currentValueInGB - a.currentValueInGB;
   });
+}
+
+function getTopHodlers() {
+  fetch('https://referrals.ostable.org/distributions/next')
+    .then(response => response.json())
+    .then(response_json => response_json.data.balances.map((item, index) => {
+      return `<a href="#/${item.address}" class="address">${index + 1}. ${item.address}</a><br>`;
+    }))
+    .then(hodlers => {
+      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
+      $('#top-hodlers').removeClass('d-none');
+    });
 }
 
 const obyteAddressInput = $('#input-obyte-address');
@@ -178,7 +192,7 @@ const totalContainer = $('#total-container');
 const chartContainer = $('#chart-container');
 const loadingContainer = $('loading-container');
 
-
+const template = $('#card-template')[0].innerHTML;
 
 function initToastr() {
   toastr.options = {
@@ -240,19 +254,15 @@ function initToastr() {
       chartAssetName.push(asset.unit);
 
       let assetStyle = '';
-      if (asset.unit.startsWith("OPT-")) {
+      if (asset.unit.startsWith('OPT-')) {
         assetStyle = 'background: #008080;';
-      }
-      else if (asset.unit.endsWith("ARB")) {
+      } else if (asset.unit.endsWith('ARB')) {
         assetStyle = 'background: #800080;';
-      }
-      else if (asset.unit.startsWith("GR")) {
+      } else if (asset.unit.startsWith('GR')) {
         assetStyle = 'background: red;';
-      }
-      else if (asset.unit.startsWith("O")) {
+      } else if (asset.unit.startsWith('O')) {
         assetStyle = 'background: green;';
-      }
-      else if (asset.unit.startsWith("I")) {
+      } else if (asset.unit.startsWith('I')) {
         assetStyle = 'background: blue;';
       }
 
@@ -317,7 +327,7 @@ function initToastr() {
     $('#open-explorer').attr('href', `https://explorer.obyte.org/#${address}`);
     $('#open-explorer2').attr('href', `https://obyte.io/@${address}`);
     $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
-    $('#market-price-reverse').text(`$1 = ${(1/marketData.averageUSDPrice).toFixed(9)} GBYTE`);
+    $('#market-price-reverse').text(`$1 = ${(1 / marketData.averageUSDPrice).toFixed(9)} GBYTE`);
     $('#total-gb').text(`${totalGB.toFixed(3)} GBYTE`);
     $('#total-usd').text(`$${totalUSD.toFixed(2)}`);
     loadingContainer.addClass('d-none');
@@ -327,29 +337,18 @@ function initToastr() {
     btnClear.removeClass('d-none');
 
   }
-
   initToastr();
-
   const marketData = await getObyteMarketData();
-  const template = $('#card-template')[0].innerHTML;
 
-  fetch('https://referrals.ostable.org/distributions/next')
-    .then(response => response.json())
-    .then(response_json => response_json.data.balances.map(item => {
-      return `<a href="#/${item.address}" class="address">${item.address}</a><br>`;
-    }))
-    .then(hodlers => {
-      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
-      $('#top-hodlers').removeClass('d-none');
-    });
-
-  obyteAddressInput.val(window.location.hash.replace(/^#\//,''));
+  obyteAddressInput.val(window.location.hash.replace(/^#\//, ''));
   if (obyteAddressInput.val()) {
     getAssets();
+  } else {
+    getTopHodlers();
   }
 
-  $(window).bind( 'hashchange', function(e) {
-    obyteAddressInput.val(window.location.hash.replace(/^#\//,''));
+  $(window).bind('hashchange', function (e) {
+    obyteAddressInput.val(window.location.hash.replace(/^#\//, ''));
     getAssets();
   });
 
