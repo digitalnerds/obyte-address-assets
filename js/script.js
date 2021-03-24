@@ -252,7 +252,7 @@
   }
 
   async function getAssets() {
-    const address = obyteAddressInput.val();
+    const address = obyteAddressInput.val().trim();
 
     if (address.length === 0) {
       return;
