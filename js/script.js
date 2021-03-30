@@ -17,6 +17,7 @@
 
   const swapPools = ['GS23D3GQNNMNJ5TL4Z5PINZ5626WASMA'];
   const curvePools = ['FCFYMFIOGS363RLDLEWIDBIIBU7M7BHP', '3RNNDX57C36E76JLG2KAQSIASAYVGAYG'];
+  const depositPools = ['GEZGVY4T3LK6N4NJAKNHNQIVAI5OYHPC'];
   const arbPools = ['7DTJZNB3MHSBVI72CKXRIKONJYBV7I2Z', 'WQBLYBRAMJVXDWS7BGTUNUTW2STO6LYP'];
   const client = new obyte.Client('wss://obyte.org/bb', {reconnect: true});
   let chart;
@@ -152,6 +153,9 @@
       else if (curvePools.includes(definition[1].base_aa)) {
         addressType = 'curve aa';
       }
+      else if (depositPools.includes(definition[1].base_aa)) {
+        addressType = 'deposit aa';
+      }
       else if (arbPools.includes(definition[1].base_aa)) {
         addressType = 'arb aa';
       }
@@ -173,6 +177,7 @@
       if (asset) {
         if (addressType === 'swap aa' && asset.name.startsWith('OPT-')) return false;
         if (addressType === 'curve aa' && (asset.name.startsWith('GR') || asset.name.startsWith('O') || asset.name.startsWith('I'))) return false;
+        if (addressType === 'deposit aa' && asset.name.startsWith('O')) return false;
         if (addressType === 'arb aa' && asset.name.endsWith('ARB')) return false;
       }
 
