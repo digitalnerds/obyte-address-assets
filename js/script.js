@@ -176,7 +176,7 @@
 
       if (asset) {
         if (addressType === 'swap aa' && asset.name.startsWith('OPT-')) return false;
-        if (addressType === 'curve aa' && (asset.name.startsWith('GR') || asset.name.startsWith('O') || asset.name.startsWith('I'))) return false;
+        if (addressType === 'curve aa' && (asset.name.startsWith('GR') || asset.name.startsWith('I'))) return false;
         if (addressType === 'deposit aa' && asset.name.startsWith('O')) return false;
         if (addressType === 'arb aa' && asset.name.endsWith('ARB')) return false;
       }
