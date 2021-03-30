@@ -402,7 +402,7 @@
 
   $('#obyte-address-form').on('submit', (e) => {
     e.preventDefault();
-    window.history.replaceState(null, null, document.location.pathname + '#/' + obyteAddressInput.val().trim());
+    window.history.pushState(null, null, document.location.pathname + '#/' + obyteAddressInput.val().trim());
     getAssets();
   });
 
