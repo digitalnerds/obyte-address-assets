@@ -11,9 +11,13 @@
   const loadingContainer = $('#loading-container');
   const exchangesContainer = $('#exchanges-container');
   const addressLinksContainer = $('#address-links-container');
+  const addressTypeContainer = $('#address-type');
 
   const template = $('#card-template')[0].innerHTML;
 
+  const swapPools = ['GS23D3GQNNMNJ5TL4Z5PINZ5626WASMA'];
+  const curvePools = ['FCFYMFIOGS363RLDLEWIDBIIBU7M7BHP', '3RNNDX57C36E76JLG2KAQSIASAYVGAYG'];
+  const arbPools = ['7DTJZNB3MHSBVI72CKXRIKONJYBV7I2Z', 'WQBLYBRAMJVXDWS7BGTUNUTW2STO6LYP'];
   const client = new obyte.Client('wss://obyte.org/bb', {reconnect: true});
   let chart;
 
@@ -49,43 +53,6 @@
     }
   }
 
-  async function getAddressMetaData(address) {
-    return new Promise((resolve, reject) => {
-      client.api.getAssetMetadata(address, (err, result) => {
-        if (err) {
-          return reject(err);
-        }
-        return resolve(result);
-      });
-    })
-  }
-
-  async function getAddressData(address) {
-    return new Promise((resolve, reject) => {
-      client.api.getJoint(address, (err, result) => {
-        if (err) {
-          return reject(err);
-        }
-        return resolve(result);
-      });
-    })
-  }
-
-  async function getAssetData(address) {
-    return new Promise((resolve, reject) => {
-      client.api.getJoint(address, function (err, result) {
-        if (err) {
-          return reject(err);
-        }
-        const metaData = _.find(result.joint.unit.messages, {app: 'data'});
-        return resolve({
-          decimal: metaData.payload.decimals,
-          name: metaData.payload.name
-        });
-      });
-    });
-  }
-
   async function getBalances(address) {
     return new Promise((resolve, reject) => {
       client.api.getBalances([address], function (err, result) {
@@ -97,15 +64,6 @@
         return resolve(result[address]);
       });
     });
-  }
-
-  async function getAssetNames(assetAddresses) {
-    const assets = {};
-    await Promise.all(assetAddresses.map(async address => {
-      const metaData = await getAddressMetaData(address);
-      assets[address] = await getAssetData(metaData.metadata_unit);
-    }));
-    return assets;
   }
 
   async function getAssetDataFromAaVars() {
@@ -154,6 +112,19 @@
     });
   }
 
+  async function getDefinition(address) {
+    return new Promise((resolve, reject) => {
+      client.api.getDefinition(address, function (err, result) {
+
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result);
+      });
+    });
+  }
+
   async function getAddressAssets(address, marketData) {
     const currentGBytePrice = marketData.averageUSDPrice;
     const balance = await getBalances(address);
@@ -161,6 +132,31 @@
       toastr.error('no balance for Obyte Address', 'Error');
       return;
     }
+
+    const definition = await getDefinition(address);
+    let addressType = 'unknown';
+    if (definition[0] == 'sig') {
+      addressType = 'regular';
+    }
+    else if (definition[0] == 'r of set') {
+      addressType = 'multisig';
+    }
+    else if (definition[0] == 'and' || definition[0] == 'or') {
+      addressType = 'smart-contract';
+    }
+    else if (definition[0] == 'autonomous agent') {
+      addressType = 'autonomous agent';
+      if (swapPools.includes(definition[1].base_aa)) {
+        addressType = 'swap aa';
+      }
+      else if (curvePools.includes(definition[1].base_aa)) {
+        addressType = 'curve aa';
+      }
+      else if (arbPools.includes(definition[1].base_aa)) {
+        addressType = 'arb aa';
+      }
+    }
+    addressTypeContainer.text(addressType);
 
     const assetData = await getAssetDataFromAaVars();
 
@@ -172,6 +168,12 @@
       const asset = assetData[key];
       if (!asset && key !== 'base') {
         return;
+      }
+
+      if (asset) {
+        if (addressType === 'swap aa' && asset.name.startsWith('OPT-')) return false;
+        if (addressType === 'curve aa' && (asset.name.startsWith('GR') || asset.name.startsWith('O') || asset.name.startsWith('I'))) return false;
+        if (addressType === 'arb aa' && asset.name.endsWith('ARB')) return false;
       }
 
       const addressBalance = balance[key];
