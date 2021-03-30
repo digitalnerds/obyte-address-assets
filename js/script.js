@@ -136,16 +136,16 @@
 
     const definition = await getDefinition(address);
     let addressType = 'unknown';
-    if (definition[0] == 'sig') {
+    if (definition[0] === 'sig') {
       addressType = 'regular';
     }
-    else if (definition[0] == 'r of set') {
+    else if (definition[0] === 'r of set') {
       addressType = 'multisig';
     }
-    else if (definition[0] == 'and' || definition[0] == 'or') {
+    else if (definition[0] === 'and' || definition[0] === 'or') {
       addressType = 'smart-contract';
     }
-    else if (definition[0] == 'autonomous agent') {
+    else if (definition[0] === 'autonomous agent') {
       addressType = 'autonomous agent';
       if (swapPools.includes(definition[1].base_aa)) {
         addressType = 'swap aa';
