@@ -164,8 +164,6 @@
     }
     addressTypeContainer.text(addressType);
 
-    const assetData = await getAssetDataFromAaVars();
-
     const currentPrices = await fetch('https://referrals.ostable.org/prices')
       .then(response => response.json());
 
@@ -381,6 +379,7 @@
 
   initToastr();
   const marketData = await getObyteMarketData();
+  const assetData = await getAssetDataFromAaVars();
 
   obyteAddressInput.val(window.location.hash.replace(/^#\//, ''));
   if (obyteAddressInput.val()) {
