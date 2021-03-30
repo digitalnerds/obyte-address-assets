@@ -274,10 +274,11 @@
       return;
     }
 
+    const addressAsset = await getAddressAssets(address, marketData);
+    if (!addressAsset) return;
+
     topHodlers.addClass('d-none');
     loadingContainer.removeClass('d-none');
-
-    const addressAsset = await getAddressAssets(address, marketData);
 
     const totalGB = addressAsset.reduce((sum, item) => {
       return sum + item.currentValueInGB;
