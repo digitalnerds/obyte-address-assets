@@ -136,28 +136,30 @@
 
     const definition = await getDefinition(address);
     let addressType = 'unknown';
-    if (definition[0] === 'sig') {
-      addressType = 'regular';
-    }
-    else if (definition[0] === 'r of set') {
-      addressType = 'multisig';
-    }
-    else if (definition[0] === 'and' || definition[0] === 'or') {
-      addressType = 'smart-contract';
-    }
-    else if (definition[0] === 'autonomous agent') {
-      addressType = 'autonomous agent';
-      if (swapBaseAAs.includes(definition[1].base_aa)) {
-        addressType = 'swap aa';
+    if (definition) {
+      if (definition[0] === 'sig') {
+        addressType = 'regular';
       }
-      else if (curveBaseAAs.includes(definition[1].base_aa)) {
-        addressType = 'curve aa';
+      else if (definition[0] === 'r of set') {
+        addressType = 'multisig';
       }
-      else if (depositBaseAAs.includes(definition[1].base_aa)) {
-        addressType = 'deposit aa';
+      else if (definition[0] === 'and' || definition[0] === 'or') {
+        addressType = 'smart-contract';
       }
-      else if (arbBaseAAs.includes(definition[1].base_aa)) {
-        addressType = 'arb aa';
+      else if (definition[0] === 'autonomous agent') {
+        addressType = 'autonomous agent';
+        if (swapBaseAAs.includes(definition[1].base_aa)) {
+          addressType = 'swap aa';
+        }
+        else if (curveBaseAAs.includes(definition[1].base_aa)) {
+          addressType = 'curve aa';
+        }
+        else if (depositBaseAAs.includes(definition[1].base_aa)) {
+          addressType = 'deposit aa';
+        }
+        else if (arbBaseAAs.includes(definition[1].base_aa)) {
+          addressType = 'arb aa';
+        }
       }
     }
     addressTypeContainer.text(addressType);
