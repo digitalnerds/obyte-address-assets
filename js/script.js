@@ -141,7 +141,7 @@
         addressType = 'regular';
       }
       else if (definition[0] === 'r of set') {
-        addressType = 'multisig';
+        addressType = `${definition[1].required}-of-${definition[1].set.length} multisig`;
       }
       else if (definition[0] === 'and' || definition[0] === 'or') {
         addressType = 'smart-contract';
