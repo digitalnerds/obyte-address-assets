@@ -141,7 +141,7 @@
         addressType = 'regular';
       }
       else if (definition[0] === 'r of set') {
-        addressType = 'multisig';
+        addressType = `${definition[1].required}-of-${definition[1].set.length} multisig`;
       }
       else if (definition[0] === 'and' || definition[0] === 'or') {
         addressType = 'smart-contract';
@@ -164,9 +164,9 @@
     }
     addressTypeContainer.text(addressType);
 
-    const assetData = await getAssetDataFromAaVars();
+    assetData = assetData || await getAssetDataFromAaVars();
 
-    const currentPrices = await fetch('https://referrals.ostable.org/prices')
+    currentPrices = currentPrices || await fetch('https://referrals.ostable.org/prices')
       .then(response => response.json());
 
     const balanceKeys = Object.keys(balance);
@@ -274,6 +274,7 @@
       return;
     }
 
+    marketData = marketData || await getObyteMarketData();
     const addressAsset = await getAddressAssets(address, marketData);
     if (!addressAsset) return;
 
@@ -380,7 +381,9 @@
   }
 
   initToastr();
-  const marketData = await getObyteMarketData();
+  let marketData;
+  let currentPrices;
+  let assetData;
 
   obyteAddressInput.val(window.location.hash.replace(/^#\//, ''));
   if (obyteAddressInput.val()) {
