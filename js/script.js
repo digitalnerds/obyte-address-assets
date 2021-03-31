@@ -164,7 +164,9 @@
     }
     addressTypeContainer.text(addressType);
 
-    const currentPrices = await fetch('https://referrals.ostable.org/prices')
+    assetData = assetData || await getAssetDataFromAaVars();
+
+    currentPrices = currentPrices || await fetch('https://referrals.ostable.org/prices')
       .then(response => response.json());
 
     const balanceKeys = Object.keys(balance);
@@ -272,6 +274,7 @@
       return;
     }
 
+    marketData = marketData || await getObyteMarketData();
     const addressAsset = await getAddressAssets(address, marketData);
     if (!addressAsset) return;
 
@@ -378,8 +381,9 @@
   }
 
   initToastr();
-  const marketData = await getObyteMarketData();
-  const assetData = await getAssetDataFromAaVars();
+  let marketData;
+  let currentPrices;
+  let assetData;
 
   obyteAddressInput.val(window.location.hash.replace(/^#\//, ''));
   if (obyteAddressInput.val()) {
