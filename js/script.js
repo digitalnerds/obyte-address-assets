@@ -167,7 +167,16 @@
     assetData = assetData || await getAssetDataFromAaVars();
 
     currentPrices = currentPrices || await fetch('https://referrals.ostable.org/prices')
-      .then(response => response.json());
+      .then(response => response.json())
+      .catch(console.error);
+
+    currentPrices = currentPrices || await fetch('https://data.ostable.org/api/v1/assets')
+      .then(response => response.json())
+      .catch((error) => {
+        toastr.error('Price data not available', 'Error');
+        console.error(error);
+      });
+      
 
     const balanceKeys = Object.keys(balance);
     const assets = await Promise.all(balanceKeys.map(async key => {
@@ -198,7 +207,16 @@
       }
       currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
 
-      const gbyteValue = currentPrices.data[key] / currentGBytePrice || 0;
+      let gbyteValue = 0;
+      if (currentPrices) {
+        if (currentPrices.data && currentPrices.data[key] && currentGBytePrice) {
+          gbyteValue = currentPrices.data[key] / currentGBytePrice;
+        }
+        else {
+          const currentGByteValue = _.find(currentPrices, {asset_id: key});
+          gbyteValue = currentGByteValue && currentGByteValue.last_gbyte_value ? currentGByteValue.last_gbyte_value : 0;
+        }
+      }
 
       return {
         balance: currentBalance,
@@ -215,16 +233,18 @@
     });
   }
 
-  function getTopHodlers() {
-    fetch('https://referrals.ostable.org/distributions/next')
+  async function getTopHodlers() {
+    topBalances = topBalances || await fetch('https://referrals.ostable.org/distributions/next')
       .then(response => response.json())
-      .then(response_json => response_json.data.balances.map(item => {
+      .catch(console.error);
+
+    if (topBalances) {
+      hodlers = topBalances.data.balances.map(item => {
         return `<a href="#/${item.address}" class="address">${item.address}</a><br>`;
-      }))
-      .then(hodlers => {
-        $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
-        $('#top-hodlers').removeClass('d-none');
       });
+      $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
+      topHodlers.removeClass('d-none');
+    }
   }
 
   function clear() {
@@ -234,7 +254,6 @@
     totalContainer.addClass('d-none');
     chartContainer.addClass('d-none');
     addressLinksContainer.addClass('d-none');
-    topHodlers.removeClass('d-none');
     btnClear.addClass('d-none');
     window.history.pushState(null, null, document.location.pathname);
     getTopHodlers();
@@ -381,6 +400,7 @@
   }
 
   initToastr();
+  let topBalances;
   let marketData;
   let currentPrices;
   let assetData;
