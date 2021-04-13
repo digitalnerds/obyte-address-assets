@@ -168,9 +168,13 @@
 
     currentPrices = currentPrices || await fetch('https://referrals.ostable.org/prices')
       .then(response => response.json())
+      .catch(console.error);
+
+    currentPrices = currentPrices || await fetch('https://data.ostable.org/api/v1/assets')
+      .then(response => response.json())
       .catch((error) => {
         toastr.error('Price data not available', 'Error');
-        console.error(error)
+        console.error(error);
       });
       
 
@@ -203,7 +207,16 @@
       }
       currentBalance = addressBalance.total / Math.pow(10, asset && asset.decimal ? asset.decimal : 0);
 
-      const gbyteValue = currentPrices && currentPrices.data[key] ? currentPrices.data[key] / currentGBytePrice : 0;
+      let gbyteValue = 0;
+      if (currentPrices) {
+        if (currentPrices.data && currentPrices.data[key] && currentGBytePrice) {
+          gbyteValue = currentPrices.data[key] / currentGBytePrice;
+        }
+        else {
+          const currentGByteValue = _.find(currentPrices, {asset_id: key});
+          gbyteValue = currentGByteValue && currentGByteValue.last_gbyte_value ? currentGByteValue.last_gbyte_value : 0;
+        }
+      }
 
       return {
         balance: currentBalance,
