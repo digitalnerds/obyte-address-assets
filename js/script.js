@@ -239,7 +239,7 @@
       .catch(console.error);
 
     if (topBalances) {
-      hodlers = topBalances.data.balances.map(item => {
+      const hodlers = topBalances.data.balances.map(item => {
         return `<a href="#/${item.address}" class="address">${item.address}</a><br>`;
       });
       $('#hodlers-list').html(hodlers.slice(0, 10).join('\n'));
