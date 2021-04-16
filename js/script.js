@@ -329,7 +329,7 @@
 
       let assetStyle = '';
       if (asset.unit.endsWith('ARB') || asset.unit.endsWith('ARB2')) {
-        assetStyle = 'background: black;';
+        assetStyle = 'background: gray;';
       } else if (asset.unit.startsWith('OPT-')) {
         assetStyle = 'background: #008080;';
       } else if (asset.unit.startsWith('SF')) {
