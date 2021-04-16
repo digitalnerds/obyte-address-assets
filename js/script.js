@@ -16,9 +16,18 @@
   const template = $('#card-template')[0].innerHTML;
 
   const swapBaseAAs = ['GS23D3GQNNMNJ5TL4Z5PINZ5626WASMA'];
-  const curveBaseAAs = ['FCFYMFIOGS363RLDLEWIDBIIBU7M7BHP', '3RNNDX57C36E76JLG2KAQSIASAYVGAYG'];
-  const depositBaseAAs = ['GEZGVY4T3LK6N4NJAKNHNQIVAI5OYHPC'];
-  const arbBaseAAs = ['7DTJZNB3MHSBVI72CKXRIKONJYBV7I2Z', 'WQBLYBRAMJVXDWS7BGTUNUTW2STO6LYP'];
+  const curveBaseAAs = [
+    'FCFYMFIOGS363RLDLEWIDBIIBU7M7BHP', '3RNNDX57C36E76JLG2KAQSIASAYVGAYG', // v1
+    '3DGWRKKWWSC6SV4ZQDWEHYFRYB4TGPKX', // v2
+  ];
+  const stableBaseAAs = [
+    'GEZGVY4T3LK6N4NJAKNHNQIVAI5OYHPC', // v1 (deposit)
+    'YXPLX6Q3HBBSH2K5HLYM45W7P7HFSEIN', // v2
+  ];
+  const stabilityBaseAAs = [
+    '7DTJZNB3MHSBVI72CKXRIKONJYBV7I2Z', 'WQBLYBRAMJVXDWS7BGTUNUTW2STO6LYP', // v1 (arb)
+    '5WOTEURNL2XGGKD2FGM5HEES4NKVCBCR', // v2
+  ];
   const client = new obyte.Client('wss://obyte.org/bb', {reconnect: true});
   let chart;
 
@@ -147,18 +156,18 @@
         addressType = 'smart-contract';
       }
       else if (definition[0] === 'autonomous agent') {
-        addressType = 'autonomous agent';
+        addressType = 'Autonomous Agent';
         if (swapBaseAAs.includes(definition[1].base_aa)) {
-          addressType = 'swap aa';
+          addressType = 'swap AA';
         }
         else if (curveBaseAAs.includes(definition[1].base_aa)) {
-          addressType = 'curve aa';
+          addressType = 'curve AA';
         }
-        else if (depositBaseAAs.includes(definition[1].base_aa)) {
-          addressType = 'deposit aa';
+        else if (stableBaseAAs.includes(definition[1].base_aa)) {
+          addressType = 'stablecoin AA';
         }
-        else if (arbBaseAAs.includes(definition[1].base_aa)) {
-          addressType = 'arb aa';
+        else if (stabilityBaseAAs.includes(definition[1].base_aa)) {
+          addressType = 'stability AA';
         }
       }
     }
@@ -186,10 +195,10 @@
       }
 
       if (asset) {
-        if (addressType === 'swap aa' && asset.name.startsWith('OPT-')) return false;
-        if (addressType === 'curve aa' && (asset.name.startsWith('GR') || asset.name.startsWith('I'))) return false;
-        if (addressType === 'deposit aa' && asset.name.startsWith('O')) return false;
-        if (addressType === 'arb aa' && asset.name.endsWith('ARB')) return false;
+        if (addressType === 'swap AA' && asset.name.startsWith('OPT-')) return false;
+        if (addressType === 'curve AA' && (asset.name.startsWith('GR') || asset.name.startsWith('I'))) return false;
+        if (addressType === 'stablecoin AA' && asset.name.startsWith('O')) return false;
+        if (addressType === 'stability AA' && (asset.name.startsWith('SF') || asset.name.startsWith('I') || asset.name.endsWith('ARB') || asset.name.endsWith('ARB2'))) return false;
       }
 
       const addressBalance = balance[key];
@@ -319,15 +328,17 @@
       chartAssetName.push(asset.unit);
 
       let assetStyle = '';
-      if (asset.unit.startsWith('OPT-')) {
+      if (asset.unit.endsWith('ARB') || asset.unit.endsWith('ARB2')) {
+        assetStyle = 'background: gray;';
+      } else if (asset.unit.startsWith('OPT-')) {
         assetStyle = 'background: #008080;';
-      } else if (asset.unit.endsWith('ARB')) {
+      } else if (asset.unit.startsWith('SF')) {
         assetStyle = 'background: #800080;';
       } else if (asset.unit.startsWith('GR')) {
         assetStyle = 'background: red;';
-      } else if (asset.unit.startsWith('O')) {
-        assetStyle = 'background: green;';
       } else if (asset.unit.startsWith('I')) {
+        assetStyle = 'background: green;';
+      } else if (asset.unit.startsWith('O')) {
         assetStyle = 'background: blue;';
       }
 
