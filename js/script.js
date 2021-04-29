@@ -18,7 +18,7 @@
   const swapBaseAAs = ['GS23D3GQNNMNJ5TL4Z5PINZ5626WASMA'];
   const curveBaseAAs = [
     'FCFYMFIOGS363RLDLEWIDBIIBU7M7BHP', '3RNNDX57C36E76JLG2KAQSIASAYVGAYG', // v1
-    '3DGWRKKWWSC6SV4ZQDWEHYFRYB4TGPKX', // v2
+    '3DGWRKKWWSC6SV4ZQDWEHYFRYB4TGPKX', 'CD5DNSVS6ENG5UYILRPJPHAB3YXKA63W', // v2
   ];
   const stableBaseAAs = [
     'GEZGVY4T3LK6N4NJAKNHNQIVAI5OYHPC', // v1 (deposit)
@@ -53,6 +53,11 @@
     }, 0) / exchangesPrices.length;
 
     exchangesPrices.forEach(market => {
+      // fix URLs
+      market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BTC') ? 'https://cryptox.pl/GBYTE-BTC.html' : market.marketUrl;
+      market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BCH') ? 'https://cryptox.pl/GBYTE-BCH.html' : market.marketUrl;
+      market.marketUrl = (!market.marketUrl && market.pair === 'GBYTE/EUR' && market.exchangeName === 'Bitladon') ? 'https://www.bitladon.com/obyte' : market.marketUrl;
+
       exchangesContainer
         .append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ` href="${market.marketUrl}"` : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
     });
