@@ -180,6 +180,10 @@
 
     assetData = assetData || await getAssetDataFromAaVars();
 
+    currentPrices = currentPrices || await fetch('https://bb-odds.herokuapp.com/api/rates')
+      .then(response => response.json())
+      .catch(console.error);
+
     currentPrices = currentPrices || await fetch('https://referrals.ostable.org/prices')
       .then(response => response.json())
       .catch(console.error);
@@ -225,6 +229,9 @@
       if (currentPrices) {
         if (currentPrices.data && currentPrices.data[key] && currentGBytePrice) {
           gbyteValue = currentPrices.data[key] / currentGBytePrice;
+        }
+        else if (currentPrices.data && currentPrices.data[key + '_USD'] && currentGBytePrice) {
+          gbyteValue = currentPrices.data[key + '_USD'] / currentGBytePrice;
         }
         else {
           const currentGByteValue = _.find(currentPrices, {asset_id: key});
