@@ -410,7 +410,8 @@
     });
 
     $('#open-explorer').attr('href', `https://explorer.obyte.org/#${address}`);
-    $('#open-explorer2').attr('href', `https://obyte.io/@${address}`);
+    $('#open-liquidity').attr('href', `https://liquidity.obyte.org/?address=${address}`);
+    $('#open-obyte-io').attr('href', `https://obyte.io/@${address}`);
     $('#market-price').text(`1 GBYTE = $${marketData.averageUSDPrice.toFixed(2)}`);
     $('#market-price-reverse').text(`$1 = ${(1 / marketData.averageUSDPrice).toFixed(9)} GBYTE`);
     $('#total-gb').text(`${Number(totalGB.toFixed(3)).toLocaleString()} GBYTE`);
