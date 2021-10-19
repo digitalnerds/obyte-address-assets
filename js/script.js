@@ -6,6 +6,7 @@
   const btnClear = $('#btn-clear');
   const topHodlers = $('#top-hodlers');
   const cardContainer = $('#card-container');
+  const cardContainer2 = $('#card-container2');
   const totalContainer = $('#total-container');
   const chartContainer = $('#chart-container');
   const loadingContainer = $('#loading-container');
@@ -45,21 +46,35 @@
           price: item.quotes.USD.price
         }
       }).filter(item => {
-        return ['bittrex', 'bit-z', 'cryptox', 'bitladon'].includes(item.exchangeId);
+        return [
+          'bittrex',
+          //'bit-z',
+          //'cryptox',
+          'bitladon',
+          'uniswap-v3',
+          'pancakeswap-v2',
+          'quickswap'
+        ].includes(item.exchangeId);
       });
 
     const averageUSDPrice = exchangesPrices.reduce((sum, item) => {
       return sum + item.price;
     }, 0) / exchangesPrices.length;
 
+    let i = 0;
     exchangesPrices.forEach(market => {
+      i++;
       // fix URLs
       market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BTC') ? 'https://cryptox.pl/GBYTE-BTC.html' : market.marketUrl;
       market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BCH') ? 'https://cryptox.pl/GBYTE-BCH.html' : market.marketUrl;
-      market.marketUrl = (!market.marketUrl && market.pair === 'GBYTE/EUR' && market.exchangeName === 'Bitladon') ? 'https://www.bitladon.com/obyte' : market.marketUrl;
+      market.marketUrl = (!market.marketUrl && market.exchangeId === 'bitladon') ? 'https://www.bitladon.com/obyte' : market.marketUrl;
+      market.marketUrl = (!market.marketUrl && market.exchangeId === 'uniswap-v3') ? 'https://app.uniswap.org/#/swap?outputCurrency=0x31f69de127c8a0ff10819c0955490a4ae46fcc2a' : market.marketUrl;
+      market.marketUrl = (!market.marketUrl && market.exchangeId === 'pancakeswap-v2') ? 'https://pancakeswap.finance/swap?outputCurrency=0xeb34de0c4b2955ce0ff1526cdf735c9e6d249d09' : market.marketUrl;
+      market.marketUrl = (!market.marketUrl && market.exchangeId === 'quickswap') ? 'https://quickswap.exchange/#/swap?outputCurrency=0xab5f7a0e20b0d056aed4aa4528c78da45be7308b' : market.marketUrl;
 
-      exchangesContainer
-        .append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ` href="${market.marketUrl}"` : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
+      if (i <= 6) {
+        exchangesContainer.append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ` href="${market.marketUrl}"` : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
+      }
     });
 
     return {
@@ -68,7 +83,7 @@
     }
   }
 
-  async function getBalances(address) {
+  async function getAddressBalances(address) {
     return new Promise((resolve, reject) => {
       client.api.getBalances([address], function (err, result) {
 
@@ -77,6 +92,32 @@
         }
 
         return resolve(result[address]);
+      });
+    });
+  }
+
+  async function getLiquidityBalances(address) {
+    const assets = {};
+    return new Promise((resolve, reject) => {
+      client.api.getAaStateVars({
+        address: '7AUBFK4YAUGUF3RWWYRFXXF7BBWY2V7Y',
+        var_prefix: `amount_${address}_`,
+      }, function (err, assetBalances) {
+        if (err) {
+          return reject(err);
+        }
+        Object.keys(assetBalances).forEach(var_name => {
+          const assetID = var_name.replace(`amount_${address}_`, '');
+          const total = assetBalances[var_name];
+          if (total) {
+            assets[assetID] = {};
+            assets[assetID].address = '7AUBFK4YAUGUF3RWWYRFXXF7BBWY2V7Y';
+            assets[assetID].total = total;
+            assets[assetID].stable = total;
+            assets[assetID].pending = 0;
+          }
+        });
+        return resolve(assets);
       });
     });
   }
@@ -142,8 +183,10 @@
 
   async function getAddressAssets(address, marketData) {
     const currentGBytePrice = marketData.averageUSDPrice;
-    const balance = await getBalances(address);
-    if (!balance) {
+    let balance;
+    const balance1 = await getAddressBalances(address) || {};
+    const balance2 = await getLiquidityBalances(address) || {};
+    if (!Object.keys(balance1).length && !Object.keys(balance2).length) {
       toastr.error('no balance for Obyte Address', 'Error');
       return;
     }
@@ -194,10 +237,22 @@
         toastr.error('Price data not available', 'Error');
         console.error(error);
       });
-      
 
-    const balanceKeys = Object.keys(balance);
-    const assets = await Promise.all(balanceKeys.map(async key => {
+    const balanceKeys1 = Object.keys(balance1);
+    balance = balance1;
+    const assets1 = await Promise.all(balanceKeys1.map(makeAssetsList));
+
+    const balanceKeys2 = Object.keys(balance2);
+    balance = balance2;
+    const assets2 = await Promise.all(balanceKeys2.map(makeAssetsList));
+
+    const assets = assets1.concat(assets2);
+
+    return assets.filter(a => a).sort(function (a, b) {
+      return b.currentValueInGB - a.currentValueInGB;
+    });
+
+    async function makeAssetsList(key) {
       const asset = assetData[key];
       if (!asset && key !== 'base') {
         return;
@@ -216,6 +271,7 @@
       if (key === 'base') {
         currentBalance = addressBalance.total / Math.pow(10, 9);
         return {
+          address: addressBalance.address || address,
           balance: currentBalance,
           baseBalance: addressBalance.total,
           currentValueInGB: currentBalance,
@@ -240,6 +296,7 @@
       }
 
       return {
+        address: addressBalance.address || address,
         balance: currentBalance,
         baseBalance: addressBalance.total,
         decimal: asset.decimal,
@@ -247,11 +304,7 @@
         currentValueInGB: gbyteValue * currentBalance,
         currentValueInUSD: gbyteValue * currentBalance * currentGBytePrice,
       }
-    }));
-
-    return assets.filter(a => a).sort(function (a, b) {
-      return b.currentValueInGB - a.currentValueInGB;
-    });
+    }
   }
 
   async function getTopHodlers() {
@@ -272,6 +325,7 @@
     $('.address-input-section').removeClass('mini');
     obyteAddressInput.val('');
     cardContainer.html('');
+    cardContainer2.html('');
     totalContainer.addClass('d-none');
     chartContainer.addClass('d-none');
     addressLinksContainer.addClass('d-none');
@@ -306,6 +360,11 @@
     if (address.length === 0) {
       return;
     }
+    cardContainer.html('');
+    cardContainer2.html('');
+    totalContainer.addClass('d-none');
+    chartContainer.addClass('d-none');
+    addressLinksContainer.addClass('d-none');
 
     const isValidAddress = obyte.utils.isValidAddress(address);
 
@@ -334,8 +393,9 @@
     const chartAssetValueInGB = [];
     const chartAssetName = [];
 
-    cardContainer.html('');
-    addressAsset.forEach(asset => {
+    addressAsset.forEach(outputCards);
+
+    async function outputCards(asset) {
       chartAssetValueInGB.push(asset.currentValueInGB.toFixed(3));
       chartAssetName.push(asset.unit);
 
@@ -361,8 +421,16 @@
         .replace(/{{amountInGB}}/g, Number(asset.currentValueInGB.toFixed(3)).toLocaleString())
         .replace(/{{amountInUSD}}/g, Number(asset.currentValueInUSD.toFixed(2)).toLocaleString());
 
-      $('#card-container').append(tmp);
-    });
+      if (asset.address === address) {
+        cardContainer.append(tmp);
+      }
+      else {
+        if (!cardContainer2.children().length) {
+          cardContainer2.append(`<h2 class="text-white">Deposited on ${asset.address}</h2>`);  
+        }
+        cardContainer2.append(tmp);
+      }
+    }
 
     if (chart) {
       chart.destroy();
