@@ -43,6 +43,7 @@
           pair: item.pair,
           exchangeId: item.exchange_id,
           exchangeName: item.exchange_name,
+          volumeShare: item.adjusted_volume_24h_share,
           price: item.quotes.USD.price
         }
       }).filter(item => {
@@ -58,12 +59,11 @@
       });
 
     const averageUSDPrice = exchangesPrices.reduce((sum, item) => {
-      return sum + item.price;
-    }, 0) / exchangesPrices.length;
+        return sum + item.price * item.volumeShare/100;
+    }, 0);
 
-    let i = 0;
+    exchangesPrices.length = 6;
     exchangesPrices.forEach(market => {
-      i++;
       // fix URLs
       market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BTC') ? 'https://cryptox.pl/GBYTE-BTC.html' : market.marketUrl;
       market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BCH') ? 'https://cryptox.pl/GBYTE-BCH.html' : market.marketUrl;
@@ -72,13 +72,10 @@
       market.marketUrl = (!market.marketUrl && market.exchangeId === 'pancakeswap-v2') ? 'https://pancakeswap.finance/swap?outputCurrency=0xeb34de0c4b2955ce0ff1526cdf735c9e6d249d09' : market.marketUrl;
       market.marketUrl = (!market.marketUrl && market.exchangeId === 'quickswap') ? 'https://quickswap.exchange/#/swap?outputCurrency=0xab5f7a0e20b0d056aed4aa4528c78da45be7308b' : market.marketUrl;
 
-      if (i <= 6) {
-        exchangesContainer.append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ` href="${market.marketUrl}"` : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
-      }
+      exchangesContainer.append(`<div class="col-6"><a class="text-center"${(market.marketUrl ? ` href="${market.marketUrl}"` : '')} target="_blank"><strong>$${market.price.toFixed(2)}</strong> <span class="d-block">${market.exchangeName} <small>(${market.pair})</small></span></a></div>`);
     });
 
     return {
-      exchangesPrices,
       averageUSDPrice
     }
   }
