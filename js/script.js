@@ -36,7 +36,7 @@
     const requestResult = await fetch('https://api.coinpaprika.com/v1/coins/gbyte-obyte/markets');
     const result = await requestResult.json();
 
-    const exchangesPrices = result
+    let exchangesPrices = result
       .map(item => {
         return {
           marketUrl: item.market_url,
@@ -46,21 +46,24 @@
           volumeShare: item.adjusted_volume_24h_share,
           price: item.quotes.USD.price
         }
-      }).filter(item => {
-        return [
-          'bittrex',
-          //'bit-z',
-          //'cryptox',
-          'bitladon',
-          'uniswap-v3',
-          'pancakeswap-v2',
-          'quickswap'
-        ].includes(item.exchangeId);
       });
 
     const averageUSDPrice = exchangesPrices.reduce((sum, item) => {
         return sum + item.price * item.volumeShare/100;
     }, 0);
+
+    exchangesPrices = exchangesPrices.filter(item => {
+      return [
+        'bittrex',
+        //'bit-z',
+        //'cryptox',
+        'bitladon',
+        'oswap',
+        'uniswap-v3',
+        'pancakeswap-v2',
+        'quickswap'
+      ].includes(item.exchangeId);
+    });
 
     exchangesPrices.length = 6;
     exchangesPrices.forEach(market => {
@@ -68,6 +71,7 @@
       market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BTC') ? 'https://cryptox.pl/GBYTE-BTC.html' : market.marketUrl;
       market.marketUrl = (market.marketUrl === 'https://cryptox.pl' && market.pair === 'GBYTE/BCH') ? 'https://cryptox.pl/GBYTE-BCH.html' : market.marketUrl;
       market.marketUrl = (!market.marketUrl && market.exchangeId === 'bitladon') ? 'https://www.bitladon.com/obyte' : market.marketUrl;
+      market.marketUrl = (!market.marketUrl && market.exchangeId === 'oswap') ? 'https://oswap.io/' : market.marketUrl;
       market.marketUrl = (!market.marketUrl && market.exchangeId === 'uniswap-v3') ? 'https://app.uniswap.org/#/swap?outputCurrency=0x31f69de127c8a0ff10819c0955490a4ae46fcc2a' : market.marketUrl;
       market.marketUrl = (!market.marketUrl && market.exchangeId === 'pancakeswap-v2') ? 'https://pancakeswap.finance/swap?outputCurrency=0xeb34de0c4b2955ce0ff1526cdf735c9e6d249d09' : market.marketUrl;
       market.marketUrl = (!market.marketUrl && market.exchangeId === 'quickswap') ? 'https://quickswap.exchange/#/swap?outputCurrency=0xab5f7a0e20b0d056aed4aa4528c78da45be7308b' : market.marketUrl;
